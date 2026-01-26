@@ -88,7 +88,7 @@ jobs:
 
             echo "Preparing deployment directory..."
             mkdir -p "$DEPLOY_DIR"
-            tar -xzf /tmp/deploy.tar.gz -C "$DEPLOY_DIR"
+            91| tar -xzf /tmp/deploy.tar.gz --warning=no-timestamp -C "$DEPLOY_DIR"
             rm /tmp/deploy.tar.gz
 
             cd "$DEPLOY_DIR"

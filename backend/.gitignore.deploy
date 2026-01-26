@@ -1,0 +1,12 @@
+# .gitignore additions for deployment
+
+# Environment files with secrets
+.env.staging
+.env.production
+
+# Deployment artifacts
+deploy-*.tar.gz
+deploy-*/
+
+# Local backup files
+backup-*/

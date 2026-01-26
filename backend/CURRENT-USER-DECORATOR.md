@@ -4,7 +4,7 @@
 
 The `@CurrentUser()` decorator extracts the authenticated user from the request object. It must be used with `@UseGuards(JwtAuthGuard)` to ensure the user is authenticated.
 
-## Import
+## Import 1
 
 ```typescript
 import { CurrentUser } from './modules/auth/current-user.decorator';

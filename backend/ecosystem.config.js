@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'order-api',
+      name: 'order-backend',
       script: './dist/main.js',
       instances: 'max',
       exec_mode: 'cluster',

@@ -19,6 +19,8 @@ CASL (Component Ability Service Layer) has been integrated into the backend to p
 
 #### 2. `check-permission.decorator.ts`
 
+##
+
 - **Purpose**: Route decorator for specifying required permissions
 - **Supported Formats**:
   - `@CheckPermission('users', 'create')` - separate resource and action

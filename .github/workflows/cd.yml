@@ -38,14 +38,13 @@ jobs:
       #     version: 8
 
       - name: Install dependencies
-        run: pnpm install
-        #run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile
 
       - name: Build
         run: yarn build
 
       - name: Prune dev dependencies
-        run: pnpm install --production --frozen-lockfile
+        run: yarn install --production --frozen-lockfile
 
       - name: Package artifact
         run: |

@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: process.env.PM2_NAME || 'my-backend-app',
+      name: 'order-api',
       script: './dist/main.js',
       instances: 'max',
       exec_mode: 'cluster',
@@ -10,7 +10,7 @@ module.exports = {
       max_memory_restart: '1G',
       env_production: {
         NODE_ENV: 'production',
-        PORT: process.env.PORT || 5000,
+        PORT: 5001 || 5000,
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',

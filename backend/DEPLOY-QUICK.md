@@ -18,7 +18,7 @@ chmod +x /tmp/setup-vps.sh
 
 Go to: **Repository → Settings → Secrets → Actions**
 
-Add these secrets:
+Add these secrets 1:
 
 - `VPS_HOST` - Your VPS IP (e.g., 123.456.789.0)
 - `VPS_USERNAME` - SSH username (e.g., ubuntu)

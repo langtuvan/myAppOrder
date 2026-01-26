@@ -80,5 +80,5 @@ jobs:
         if: success()
         with:
           name: dist-${{ github.sha }}
-          path: dist
+          path: backend/dist
           retention-days: 7

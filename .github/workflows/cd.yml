@@ -64,6 +64,7 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           source: "backend/deploy.tar.gz"
           target: "/tmp"
+          strip_components: 1
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3

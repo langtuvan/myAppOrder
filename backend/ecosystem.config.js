@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'order-backend',
-      script: './dist/main.js',
+      script: './dist/src/main.js',
       instances: 'max',
       exec_mode: 'cluster',
       autorestart: true,
@@ -10,7 +10,7 @@ module.exports = {
       max_memory_restart: '1G',
       env_production: {
         NODE_ENV: 'production',
-        PORT: 5001 || 5000,
+        PORT: process.env.APP_PORT || 5000,
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',

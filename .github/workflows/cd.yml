@@ -88,7 +88,7 @@ jobs:
 
             echo "Preparing deployment directory..."
             mkdir -p "$DEPLOY_DIR"
-            91| tar -xzf /tmp/deploy.tar.gz --warning=no-timestamp -C "$DEPLOY_DIR"
+            tar -xzf /tmp/deploy.tar.gz --warning=no-timestamp -C "$DEPLOY_DIR"
             rm /tmp/deploy.tar.gz
 
             cd "$DEPLOY_DIR"
@@ -104,7 +104,7 @@ jobs:
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN || '*' }}
             EOL
 
-            mkdir -p logs
+           
 
             echo "Restarting application with PM2..."
             if pm2 describe order-api  > /dev/null 2>&1; then

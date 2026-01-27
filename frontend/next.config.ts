@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+const apiHost = process.env.HOST_API || "http://localhost:5000";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -15,6 +16,12 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: apiHost.replace(/^https?:\/\//, ""),
         port: "",
         pathname: "/**",
       },

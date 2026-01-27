@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: apiHost.replace(/^https?:\/\//, ""),
+        hostname: "booking-api.webnextapp.com",
         port: "",
         pathname: "/**",
       },

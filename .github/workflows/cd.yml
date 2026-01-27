@@ -110,7 +110,7 @@ jobs:
             fi
             pm2 save
 
-             echo "Deployment successful"
+             echo "Deployment successful!"
 
             echo "Health check..."
             sleep 10

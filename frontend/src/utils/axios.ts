@@ -3,10 +3,12 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { HOST_API } from "@/config-global";
 import { image } from "motion/react-client";
 
+export const HOST_API_URL = HOST_API + "/api";
+
 // ----------------------------------------------------------------------
 
 const axiosInstance = axios.create({
-  baseURL: HOST_API,
+  baseURL: HOST_API_URL,
   headers: {
     "Content-Type": "application/json",
     "X-Locale": "en", // Set default locale header

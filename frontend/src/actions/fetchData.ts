@@ -1,12 +1,12 @@
 "use server";
-import { HOST_API } from "@/config-global";
 import { Category } from "@/types/category";
 import { Product } from "@/types/product";
+import { HOST_API_URL } from "@/utils/axios";
 import { revalidateTag } from "next/cache";
 
 export async function fetchProducts() {
   try {
-    const res = await fetch(HOST_API + "/products", {
+    const res = await fetch(HOST_API_URL + "/products", {
       method: "GET",
       next: { tags: ["products"] },
       cache: "force-cache",
@@ -16,7 +16,7 @@ export async function fetchProducts() {
 }
 export async function fetchCategories() {
   try {
-    const res = await fetch(HOST_API + "/categories", {
+    const res = await fetch(HOST_API_URL + "/categories", {
       method: "GET",
       next: { tags: ["categories"] },
       cache: "force-cache",

@@ -13,6 +13,7 @@ const corsOptions: CorsOptions = {
   // origin: process.env.CORS_ORIGIN,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
   maxAge: 3600,
+  //allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
 
@@ -27,6 +28,9 @@ async function bootstrap() {
   app.enableCors(corsOptions);
   // Cookie parser middleware
   app.use(cookieParser());
+
+  // Set global prefix
+  app.setGlobalPrefix('api');
 
   // Apply locale interceptor globally
   //app.useGlobalInterceptors(new LocaleInterceptor());
@@ -48,9 +52,6 @@ async function bootstrap() {
       stopAtFirstError: true,
     }),
   );
-
-  // Set global prefix
-  app.setGlobalPrefix('api');
 
   // Swagger configuration
   const config = new DocumentBuilder()

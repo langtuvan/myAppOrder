@@ -1,8 +1,7 @@
 import Link from "next/link";
-import Count from "@/components/count";
 import { ProductGridListMain } from "@/sections/list/product-list";
 import { fetchCategories, fetchProducts } from "@/actions/fetchData";
-import { DropDownToggleTheme } from "@/components/ThemeToggle";
+import paths from "@/router/path";
 
 export default async function HomePage() {
   const [products = [], categories = []] = await Promise.all([
@@ -20,7 +19,7 @@ export default async function HomePage() {
           perfect brew today!
         </p>
         <p>
-          <Link href="/dashboard/" className="">
+          <Link href={paths.dashboard.root} >
             App Login
           </Link>
         </p>

@@ -29,7 +29,6 @@ import { AmenitiesModule } from './modules/amenities/amenities.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { HealthModule } from './modules/health/health.module';
 
-
 @Module({
   imports: [
     // Configuration
@@ -44,10 +43,19 @@ import { HealthModule } from './modules/health/health.module';
       exclude: ['/api*'],
       serveRoot: '/',
     }),
-    // Serve uploaded files
+    // Serve uploaded files (không yêu cầu authentication)
+    // ...existing code...
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
+      rootPath: join(__dirname, '..', 'upload'), // Đổi từ 'uploads' thành 'upload'
+      serveRoot: '/upload', // Đổi từ '/uploads' thành '/upload'
+      exclude: ['/api*'],
+      serveStaticOptions: {
+        index: false,
+        setHeaders: (res) => {
+          res.set('Access-Control-Allow-Origin', '*');
+          res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+        },
+      },
     }),
     // Database with global soft delete plugin
     mongooseConfig,

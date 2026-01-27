@@ -10,11 +10,24 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "localhost",
         port: "5000",
-        pathname: "/upload/images/**",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
       },
     ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Allow localhost in development
+    //unoptimized: process.env.NODE_ENV === "development" ? false : false,
+    minimumCacheTTL: 60,
+    // This allows private IPs like localhost
+    dangerouslyAllowLocalIP: true,
   },
-
 
   // images: {
   //   domains: ["localhost:5000"],

@@ -18,8 +18,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    // Allow static files (non-API routes)
+    // // Allow static files (non-API routes)
     const request = context.switchToHttp().getRequest();
+
+    // Cho phép truy cập /uploads mà không cần auth
+    if (request.url.startsWith('/upload')) {
+      return true;
+    }
+
     if (!request.url.startsWith('/api')) {
       return true;
     }

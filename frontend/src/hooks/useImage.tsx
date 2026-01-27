@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import Image, { type ImageProps } from "next/image";
-import { HOST_API_BASE } from "@/config-global";
+import { HOST_API } from "@/config-global";
 
 export default function UseImage({ className, ...props }: ImageProps) {
   if (!props.src) {
@@ -21,7 +21,8 @@ export default function UseImage({ className, ...props }: ImageProps) {
       </svg>
     );
   }
-  const imageSrc = HOST_API_BASE + props?.src;
+
+  const imageSrc = HOST_API + props?.src;
 
   return (
     <Image
@@ -30,10 +31,11 @@ export default function UseImage({ className, ...props }: ImageProps) {
       height={props?.height || 100}
       alt={props.alt || ""}
       src={imageSrc}
-      unoptimized // to allow external URLs
+      //src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+      //unoptimized // Use unoptimized for external images
       className={clsx(
         "mx-auto aspect-square rounded-lg object-cover group-hover:opacity-75 ",
-        className
+        className,
       )}
     />
   );

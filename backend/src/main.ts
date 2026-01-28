@@ -24,6 +24,10 @@ async function bootstrap() {
     prefix: '/upload',
   });
 
+  app.useStaticAssets('client', {
+    prefix: '/',
+  });
+
   // Enable CORS
   app.enableCors(corsOptions);
   // Cookie parser middleware

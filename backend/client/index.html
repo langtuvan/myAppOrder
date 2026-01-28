@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Backend - NestJS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #c41e44 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        h1 {
+            color: #e0234e;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 1.5rem;
+        }
+
+        .links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .link-button {
+            padding: 0.75rem 1.5rem;
+            background: #e0234e;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .link-button:hover {
+            background: #c41e44;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(224, 35, 78, 0.4);
+        }
+
+        .link-button.secondary {
+            background: #667eea;
+        }
+
+        .link-button.secondary:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://nestjs.com/img/logo-small.svg" alt="NestJS Logo" class="logo">
+        <h1>Booking Backend</h1>
+        <p>A progressive Node.js framework for building efficient and scalable server-side applications.</p>
+        <div class="links">
+            <!-- <a href="https://docs.nestjs.com" class="link-button" target="_blank">Documentation</a>
+            <a href="https://github.com/nestjs/nest" class="link-button secondary" target="_blank">GitHub</a> -->
+        </div>
+        <p class="subtitle">Powered by NestJS</p>
+        <p>Design by: langtuvan@hotmail.com</p>
+        <p>Phone: 0938 887 467</p>
+    </div>
+</body>
+</html>

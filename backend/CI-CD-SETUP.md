@@ -1,221 +1,150 @@
-# CI/CD Setup Guide - Backend Deployment to VPS
+# CI/CD Setup Guide
 
-Complete guide for setting up automated CI/CD pipeline to deploy the NestJS backend to your VPS hosting.
+Automated deployment pipeline for NestJS backend to VPS using GitHub Actions, PM2, and Nginx.
 
-## 📋 Overview
+## Prerequisites
 
-This setup uses GitHub Actions to automatically:
+- VPS with Ubuntu 20.04+
+- GitHub repository
+- Domain name (optional, for SSL)
 
-- Run tests and linting
-- Build the application
-- Deploy to VPS using SSH
-- Manage releases with rollback capability
-- Zero-downtime deployments with PM2
+## Initial VPS Setup
 
-## 🚀 Quick Start
 
-### 1. Prepare Your VPS
+Connection string:
 
-SSH into your VPS and run the setup script:
+```
+mongodb://booking_user:PASSWORD@localhost:27017/booking-staging?authSource=admin
+```
+
+### 3. Generate SSH Key
 
 ```bash
-# Copy the setup script to your VPS
-scp backend/scripts/setup-vps.sh user@your-vps:/tmp/
-
-# SSH into your VPS
-ssh user@your-vps
-
-# Run the setup script
-chmod +x /tmp/setup-vps.sh
-/tmp/setup-vps.sh
-```
-
-This will install:
-
-- Node.js 20.x
-- pnpm
-- PM2
-- MongoDB
-- Nginx
-- Certbot (for SSL)
-- UFW Firewall
-
-### 2. Configure MongoDB
-
-Create a database user for your application:
-
-```bash
-mongosh
-
-use admin
-db.createUser({
-  user: "booking_user",
-  pwd: "your_strong_password_here",
-  roles: [
-    { role: "readWrite", db: "booking-staging" },
-    { role: "readWrite", db: "booking-production" }
-  ]
-})
-```
-
-Your MongoDB URI will be:
-
-```
-mongodb://booking_user:your_strong_password_here@localhost:27017/booking-staging?authSource=admin
-```
-
-### 3. Setup SSH Key for GitHub Actions
-
-On your VPS:
-
-```bash
-# Generate SSH key for deployments
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy
-
-# Add public key to authorized_keys
+ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_deploy
 cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
-
-# Display private key (copy this for GitHub secrets)
-cat ~/.ssh/github_deploy
+cat ~/.ssh/github_deploy  # Copy for GitHub
 ```
 
-### 4. Configure GitHub Secrets
+### 4. Configure Nginx
 
-Go to your GitHub repository → Settings → Secrets and variables → Actions → New repository secret
-
-Add the following secrets:
-
-#### Required Secrets:
-
-- `VPS_HOST` - Your VPS IP address or domain
-- `VPS_USERNAME` - SSH username
-- `VPS_SSH_KEY` - Private SSH key (from step 3)
-- `MONGODB_URI` - MongoDB connection string
-- `JWT_SECRET` - JWT secret key (generate with: `openssl rand -base64 32`)
-- `CORS_ORIGIN` - Allowed CORS origins (semicolon-separated)
-
-#### Optional Secrets:
-
-- `VPS_PORT` - SSH port (default: 22)
-- `PORT` - Application port (default: 5000)
-- `COOKIE_SECRET` - Cookie secret (generate with: `openssl rand -base64 32`)
-
-#### Environment-Specific Secrets:
-
-For staging:
+```bash
+sudo nano /etc/nginx/sites-available/booking-api
+# Update with your domains
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
 ```
+
+### 6. Enable PM2 Auto-start
+
+```bash
+pm2 startup
+# Run the generated command
+pm2 save
+```
+
+## GitHub Configuration
+
+Navigate to: **Repository → Settings → Secrets and variables → Actions**
+
+### Required Secrets
+
+| Secret         | Description        | Example                                        |
+| -------------- | ------------------ | ---------------------------------------------- |
+| `VPS_HOST`     | VPS IP or domain   | `123.456.789.0`                                |
+| `VPS_USERNAME` | SSH username       | `ubuntu`                                       |
+| `VPS_SSH_KEY`  | Private SSH key    | Contents of `~/.ssh/github_deploy`             |
+| `MONGODB_URI`  | MongoDB connection | `mongodb://user:pass@localhost:27017/db`       |
+| `JWT_SECRET`   | JWT signing key    | Generate: `openssl rand -base64 32`            |
+| `CORS_ORIGIN`  | Allowed origins    | `https://yourdomain.com;http://localhost:3000` |
+
+### Optional Secrets
+
+| Secret          | Default | Description           |
+| --------------- | ------- | --------------------- |
+| `VPS_PORT`      | `22`    | SSH port              |
+| `PORT`          | `5000`  | Application port      |
+| `COOKIE_SECRET` | -       | Session cookie secret |
+
+### Environment-Specific Configuration
+
+**Staging:**
+
+```env
 MONGODB_URI=mongodb://user:pass@localhost:27017/booking-staging?authSource=admin
 PORT=5000
 CORS_ORIGIN=http://localhost:3000;https://staging.yourdomain.com
 ```
 
-For production:
+**Production:**
 
-```
+```env
 MONGODB_URI=mongodb://user:pass@localhost:27017/booking-production?authSource=admin
 PORT=5001
 CORS_ORIGIN=https://yourdomain.com;https://www.yourdomain.com
 ```
 
-### 5. Configure Nginx
+## Deployment
 
-Update the Nginx configuration with your domains:
+### Automatic Deployment
 
-```bash
-sudo nano /etc/nginx/sites-available/booking-api
-```
-
-Replace `yourdomain.com` with your actual domain.
-
-Test and reload Nginx:
+- **Staging:** Push to `staging` branch
+- **Production:** Push to `main` branch
 
 ```bash
-sudo nginx -t
-sudo systemctl reload nginx
+git push origin staging    # Deploy to staging
+git push origin main       # Deploy to production
 ```
 
-### 6. Setup SSL Certificates
+### Manual Deployment via GitHub
 
-```bash
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-sudo certbot --nginx -d staging.yourdomain.com
+1. Go to **Actions → Deploy Backend to VPS**
+2. Click **Run workflow**
+3. Select environment
+4. Click **Run workflow**
 
-# Test auto-renewal
-sudo certbot renew --dry-run
-```
-
-### 7. Enable PM2 Startup
-
-```bash
-pm2 startup
-# Run the command that PM2 outputs
-pm2 save
-```
-
-## 🔄 Deployment Workflows
-
-### Automatic Deployments
-
-**Staging:** Push to `staging` branch
-
-```bash
-git push origin staging
-```
-
-**Production:** Push to `main` branch
-
-```bash
-git push origin main
-```
-
-### Manual Deployments
-
-Trigger deployment from GitHub:
-
-1. Go to Actions → Deploy Backend to VPS
-2. Click "Run workflow"
-3. Select environment (staging/production)
-4. Click "Run workflow"
-
-### Local Manual Deployment
+### Manual Deployment via Script
 
 ```bash
 cd backend
-
-# Create environment files
 cp .env.staging.example .env.staging
 cp .env.production.example .env.production
-
-# Edit with your values
-nano .env.staging
-nano .env.production
-
-# Deploy
+# Edit environment files
 chmod +x scripts/deploy-manual.sh
 ./scripts/deploy-manual.sh staging
 ```
 
-## ⏮️ Rollback
+## Release Structure
 
-If something goes wrong, rollback to the previous release:
+```
+~/apps/booking-api-production/
+├── current → releases/20260125-143022/
+├── releases/
+│   ├── 20260125-143022/
+│   ├── 20260125-120000/
+│   └── ...
+├── backups/
+│   └── backup-20260125-143022/
+└── shared/
+    ├── .env
+    └── logs/
+```
 
-### From VPS:
+## Rollback
+
+### Via SSH
 
 ```bash
 ssh user@your-vps
-
-# View releases
-ls -lt ~/apps/booking-api-production/releases/
-
-# Rollback
 cd ~/apps/booking-api-production
-ln -sfn releases/PREVIOUS_RELEASE_TIMESTAMP current
+ls -lt releases/  # List releases
+ln -sfn releases/PREVIOUS_TIMESTAMP current
 cd current
 pm2 reload ecosystem.config.js --env production --update-env
 ```
 
-### Using Rollback Script:
+### Via Script
 
 ```bash
 cd backend
@@ -223,65 +152,49 @@ chmod +x scripts/rollback.sh
 ./scripts/rollback.sh production
 ```
 
-## 📊 Monitoring & Logs
+## Monitoring
 
-### PM2 Commands:
+### PM2 Commands
 
 ```bash
-# List all processes
-pm2 list
-
-# View logs
-pm2 logs booking-api-production
-pm2 logs booking-api-staging
-
-# Monitor
-pm2 monit
-
-# Restart
-pm2 restart booking-api-production
-
-# Stop
-pm2 stop booking-api-production
+pm2 list                              # List processes
+pm2 logs booking-api-production       # View logs
+pm2 monit                             # Monitor resources
+pm2 restart booking-api-production    # Restart app
+pm2 stop booking-api-production       # Stop app
 ```
 
-### Application Logs:
+### Application Logs
 
 ```bash
-# On VPS
 tail -f ~/apps/booking-api-production/shared/logs/out.log
 tail -f ~/apps/booking-api-production/shared/logs/err.log
 ```
 
-### Nginx Logs:
+### Nginx Logs
 
 ```bash
 sudo tail -f /var/log/nginx/access.log
 sudo tail -f /var/log/nginx/error.log
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Deployment Fails
 
-1. Check GitHub Actions logs
-2. Verify SSH connection: `ssh -i path/to/key user@host`
-3. Check VPS disk space: `df -h`
-4. Verify MongoDB is running: `sudo systemctl status mongod`
+```bash
+# Check GitHub Actions logs
+# Verify SSH: ssh -i key user@host
+df -h  # Check disk space
+sudo systemctl status mongod  # Check MongoDB
+```
 
 ### Application Won't Start
 
 ```bash
-# Check PM2 logs
 pm2 logs booking-api-production --lines 100
-
-# Check environment variables
 cat ~/apps/booking-api-production/shared/.env
-
-# Test MongoDB connection
-mongosh "mongodb://user:pass@localhost:27017/booking-production?authSource=admin"
-
-# Manually start
+mongosh "mongodb://user:pass@localhost:27017/db?authSource=admin"
 cd ~/apps/booking-api-production/current
 pm2 start ecosystem.config.js --env production
 ```
@@ -289,82 +202,37 @@ pm2 start ecosystem.config.js --env production
 ### Nginx Issues
 
 ```bash
-# Test configuration
-sudo nginx -t
-
-# Check status
+sudo nginx -t  # Test configuration
 sudo systemctl status nginx
-
-# Restart
 sudo systemctl restart nginx
-
-# Check logs
 sudo tail -f /var/log/nginx/error.log
 ```
 
-## 🔐 Security Best Practices
+## Backup Strategy
 
-1. **SSH Hardening:**
+### Automated MongoDB Backups
 
-   ```bash
-   # Disable password authentication
-   sudo nano /etc/ssh/sshd_config
-   # Set: PasswordAuthentication no
-   sudo systemctl restart sshd
-   ```
-
-2. **MongoDB Security:**
-   - Enable authentication
-   - Use strong passwords
-   - Bind to localhost only
-   - Regular backups
-
-3. **Firewall:**
-
-   ```bash
-   sudo ufw status
-   # Only ports 22, 80, 443 should be open
-   ```
-
-4. **Regular Updates:**
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   ```
-
-## 📦 Backup Strategy
-
-### Automatic Backups (Recommended)
-
-Create a backup script:
+Create `~/backup-mongodb.sh`:
 
 ```bash
 #!/bin/bash
-# ~/backup-mongodb.sh
-
 BACKUP_DIR="$HOME/backups/mongodb"
 DATE=$(date +%Y%m%d-%H%M%S)
-
 mkdir -p "$BACKUP_DIR"
 
-# Backup staging
+# Backup databases
 mongodump --uri="mongodb://user:pass@localhost:27017/booking-staging?authSource=admin" \
   --out="$BACKUP_DIR/staging-$DATE"
-
-# Backup production
 mongodump --uri="mongodb://user:pass@localhost:27017/booking-production?authSource=admin" \
   --out="$BACKUP_DIR/production-$DATE"
 
 # Compress
 tar -czf "$BACKUP_DIR/staging-$DATE.tar.gz" "$BACKUP_DIR/staging-$DATE"
 tar -czf "$BACKUP_DIR/production-$DATE.tar.gz" "$BACKUP_DIR/production-$DATE"
-
-# Cleanup
 rm -rf "$BACKUP_DIR/staging-$DATE" "$BACKUP_DIR/production-$DATE"
 
-# Keep only last 7 days
+# Keep last 7 days
 find "$BACKUP_DIR" -name "*.tar.gz" -mtime +7 -delete
-
-echo "Backup completed: $DATE"
 ```
 
 Setup cron job:
@@ -372,111 +240,71 @@ Setup cron job:
 ```bash
 chmod +x ~/backup-mongodb.sh
 crontab -e
-
-# Add: Daily backup at 2 AM
-0 2 * * * /home/user/backup-mongodb.sh >> /home/user/backup.log 2>&1
+# Add: 0 2 * * * /home/user/backup-mongodb.sh >> /home/user/backup.log 2>&1
 ```
 
-## 🎯 Release Management
+## Security Hardening
 
-The CI/CD pipeline maintains:
+### SSH Configuration
 
-- Last 5 releases on the VPS
-- Last 5 backups
-- Automatic cleanup of old releases
-
-### Directory Structure:
-
-```
-~/apps/booking-api-production/
-├── current -> releases/20260125-143022/
-├── releases/
-│   ├── 20260125-143022/
-│   ├── 20260125-120000/
-│   └── ...
-├── backups/
-│   ├── backup-20260125-143022/
-│   └── ...
-└── shared/
-    ├── .env
-    └── logs/
+```bash
+sudo nano /etc/ssh/sshd_config
+# Set: PasswordAuthentication no
+sudo systemctl restart sshd
 ```
 
-## 📝 Environment Variables Reference
+### Firewall
 
-### Staging Environment:
-
-- Node: `NODE_ENV=staging`
-- Port: `5000`
-- MongoDB: `booking-staging` database
-- Domain: `staging.yourdomain.com`
-
-### Production Environment:
-
-- Node: `NODE_ENV=production`
-- Port: `5001`
-- MongoDB: `booking-production` database
-- Domain: `yourdomain.com`
-
-## 🔄 Workflow Diagram
-
-```
-┌─────────────┐
-│ Push Code   │
-│ to GitHub   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────┐
-│ GitHub Actions      │
-│ - Install deps      │
-│ - Run tests         │
-│ - Lint code         │
-│ - Build app         │
-└──────┬──────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│ Deploy to VPS       │
-│ - Upload build      │
-│ - Create release    │
-│ - Install deps      │
-│ - Backup current    │
-│ - Switch symlink    │
-└──────┬──────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│ PM2 Reload          │
-│ - Zero downtime     │
-│ - Health check      │
-└──────┬──────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│ Deployment Complete │
-└─────────────────────┘
+```bash
+sudo ufw status  # Only 22, 80, 443 should be open
 ```
 
-## 💡 Tips
+### System Updates
 
-1. **Test in staging first** - Always deploy to staging before production
-2. **Monitor after deployment** - Check logs and PM2 status after each deployment
-3. **Keep secrets secure** - Never commit .env files to git
-4. **Regular backups** - Automate database backups
-5. **Health checks** - Use the healthcheck endpoint to verify deployments
-6. **Gradual rollout** - For major changes, consider blue-green deployments
+```bash
+sudo apt update && sudo apt upgrade -y
+```
 
-## 📞 Support
+### MongoDB Security
 
-If you encounter issues:
+- Enable authentication ✓
+- Use strong passwords ✓
+- Bind to localhost only ✓
+- Regular backups ✓
 
-1. Check the troubleshooting section
-2. Review GitHub Actions logs
-3. Check PM2 and Nginx logs on the VPS
-4. Verify all environment variables are set correctly
+## Deployment Workflow
 
-## 🔗 Related Documentation
+```mermaid
+graph TD
+    A[Push to GitHub] --> B[GitHub Actions]
+    B --> C[Run Tests & Build]
+    C --> D[Deploy to VPS]
+    D --> E[Create Release]
+    E --> F[Install Dependencies]
+    F --> G[Backup Current]
+    G --> H[Switch Symlink]
+    H --> I[PM2 Reload]
+    I --> J[Health Check]
+```
+
+## Best Practices
+
+- ✅ Test in staging before production
+- ✅ Monitor logs after deployment
+- ✅ Never commit `.env` files
+- ✅ Automate database backups
+- ✅ Use health checks to verify deployments
+- ✅ Keep last 5 releases for rollback
+- ✅ Regular security updates
+
+## Environment Reference
+
+| Environment | Port | Database             | Domain                   |
+| ----------- | ---- | -------------------- | ------------------------ |
+| Staging     | 5000 | `booking-staging`    | `staging.yourdomain.com` |
+| Production  | 5001 | `booking-production` | `yourdomain.com`         |
+
+## Related Documentation
 
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - General deployment guide
 - [README.md](./README.md) - Application documentation

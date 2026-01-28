@@ -65,6 +65,7 @@ import {
 } from "@/components/dialog";
 import paths from "@/router/path";
 import { Strong, Text } from "@/components/text";
+import { PrintBill } from "@/components/PrintBill";
 
 interface FormValuesProps extends Order {}
 
@@ -85,6 +86,10 @@ export default function OrderNewEditForm({
 }: Props) {
   const isEditing = !!currentData;
   const [currentStep, setCurrentStep] = useState<StepType>(defaultStep);
+  const [showPrintBill, setShowPrintBill] = useState(false);
+  const [submittedOrderData, setSubmittedOrderData] = useState<Order | null>(
+    null,
+  );
   const router = useRouter();
   const { provinces, table } = vietNamLocation;
 
@@ -226,17 +231,23 @@ export default function OrderNewEditForm({
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate async operation
 
     try {
-      isEditing && currentData?._id
-        ? await updateMutation?.mutateAsync({
-            id: currentData._id,
-            data,
-          })
-        : await createMutation?.mutateAsync(data);
+      const result =
+        isEditing && currentData?._id
+          ? await updateMutation?.mutateAsync({
+              id: currentData._id,
+              data,
+            })
+          : await createMutation?.mutateAsync(data);
 
-      isEditing && router.push(paths.dashboard.orders.list);
+      if (isEditing) {
+        return router.push(paths.dashboard.orders.list);
+      } else {
+        // Show print bill for new orders
+        setSubmittedOrderData(result || data);
+        setShowPrintBill(true);
+      }
 
       setCurrentStep(StepType.ADD_ITEMS);
-
       methods.reset({ ...defaultValues, orderExport: data.orderExport });
       // router.back();
     } catch (errors: ErrorFormSubmit | any) {
@@ -250,6 +261,10 @@ export default function OrderNewEditForm({
         });
     }
   };
+
+  // const handleOnCloesePrintBill = () => {
+  //   setShowPrintBill(false);
+  // };
 
   useEffect(() => {
     methods.reset({ ...defaultValues });
@@ -1206,6 +1221,17 @@ export default function OrderNewEditForm({
           </div>
         </div>
       </div>
+
+      {/* Print Bill Dialog */}
+      {showPrintBill && submittedOrderData && (
+        <PrintBill
+          orderData={submittedOrderData}
+          onClose={() => {
+            setShowPrintBill(false);
+            setSubmittedOrderData(null);
+          }}
+        />
+      )}
     </div>
   );
 }

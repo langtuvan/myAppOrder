@@ -82,7 +82,7 @@ jobs:
               cd "$BACKUP_DIR" && ls -t backup-*.tar.gz | tail -n +6 | xargs -r rm || true
             fi
 
-            echo "Preparing deployment directory..."
+            echo "Preparing deployment directory...."
             mkdir -p "$DEPLOY_DIR"
             tar -xzf /tmp/deploy.tar.gz --warning=no-timestamp -C "$DEPLOY_DIR"
             rm /tmp/deploy.tar.gz

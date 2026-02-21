@@ -19,11 +19,11 @@ import { Public } from '../../decorators/public.decorator';
 import { CheckPermission } from '../../casl';
 import { ParseObjectIdPipe } from '@nestjs/mongoose';
 
-function toUserResponse(user: UserDocument): UserResponseDto {
+function toUserResponse(user: UserDocument): any {
   const obj = user.toJSON ? user.toJSON() : user;
   // Remove sensitive fields
   const { password, refreshToken, ...rest } = obj;
-  return rest as UserResponseDto;
+  return rest as any;
 }
 
 function toPaginatedUserResponse(

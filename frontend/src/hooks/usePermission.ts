@@ -28,19 +28,7 @@ export function usePermission() {
       hasPermission("orders", "orders:" + OrderStatus.COMPLETED),
     canCancelOrders: () =>
       hasPermission("orders", "orders:" + OrderStatus.CANCELLED),
-    // products
-    canViewProducts: () => hasPermission("products", "products:read"),
-    canCreateProducts: () => hasPermission("products", "products:create"),
-    canEditProducts: () => hasPermission("products", "products:update"),
-    canDeleteProducts: () => hasPermission("products", "products:delete"),
-    canRestoreProducts: () => hasPermission("products", "products:restore"),
-    // categories
-    canViewCategories: () => hasPermission("categories", "categories:read"),
-    canCreateCategories: () => hasPermission("categories", "categories:create"),
-    canEditCategories: () => hasPermission("categories", "categories:update"),
-    canDeleteCategories: () => hasPermission("categories", "categories:delete"),
-    canRestoreCategories: () =>
-      hasPermission("categories", "categories:restore"),
+
     // users
     canViewUsers: () => hasPermission("users", "users:read"),
     canCreateUsers: () => hasPermission("users", "users:create"),
@@ -61,5 +49,41 @@ export function usePermission() {
     canEditItems: () => hasPermission("items", "items:update"),
     canDeleteItems: () => hasPermission("items", "items:delete"),
     canRestoreItems: () => hasPermission("items", "items:restore"),
+
+    // products
+    canViewProducts: () => hasPermission("products", "products:read"),
+    canCreateProducts: () => hasPermission("products", "products:create"),
+    canEditProducts: () => hasPermission("products", "products:update"),
+    canDeleteProducts: () => hasPermission("products", "products:delete"),
+    canRestoreProducts: () => hasPermission("products", "products:restore"),
+    // categories
+    canViewCategories: () => hasPermission("categories", "categories:read"),
+    canCreateCategories: () => hasPermission("categories", "categories:create"),
+    canEditCategories: () => hasPermission("categories", "categories:update"),
+    canDeleteCategories: () => hasPermission("categories", "categories:delete"),
+    canRestoreCategories: () =>
+      hasPermission("categories", "categories:restore"),
+    // warehouses
+    canViewWarehouses: () => hasPermission("warehouses", "warehouses:read"),
+    canCreateWarehouses: () => hasPermission("warehouses", "warehouses:create"),
+    canEditWarehouses: () => hasPermission("warehouses", "warehouses:update"),
+    canDeleteWarehouses: () => hasPermission("warehouses", "warehouses:delete"),
+    canRestoreWarehouses: () =>
+      hasPermission("warehouses", "warehouses:restore"),
+    // suppliers
+    canViewSuppliers: () => hasPermission("suppliers", "suppliers:read"),
+    canCreateSuppliers: () => hasPermission("suppliers", "suppliers:create"),
+    canEditSuppliers: () => hasPermission("suppliers", "suppliers:update"),
+    canDeleteSuppliers: () => hasPermission("suppliers", "suppliers:delete"),
+    canRestoreSuppliers: () => hasPermission("suppliers", "suppliers:restore"),
+    // goods receipts
+    canViewGoodsReceipts: () =>
+      hasPermission("goodsReceipts", "goodsReceipts:read"),
+    canCreateGoodsReceipts: () =>
+      hasPermission("goodsReceipts", "goodsReceipts:create"),
+    canEditGoodsReceipts: () =>
+      hasPermission("goodsReceipts", "goodsReceipts:update"),
+    canDeleteGoodsReceipts: () =>
+      hasPermission("goodsReceipts", "goodsReceipts:delete"),
   };
 }

@@ -1,4 +1,14 @@
 "use client";
+import { useState, useMemo, useEffect } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  flexRender,
+  ColumnDef,
+  ColumnSizingState,
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -7,6 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/table";
+import {
+  GlobalFilterRowCount,
+  HeaderSortIcon,
+  TableRowNoData,
+  TableRowSkeleton,
+} from "@/components/table-component";
 import paths from "@/router/path";
 import { Badge } from "@/components/badge";
 import { Product } from "@/types/product";
@@ -26,79 +42,256 @@ import { Button } from "@/components/button";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { paramCase } from "@/utils/change-case";
-import { use, useState } from "react";
+import { use } from "react";
 import AddToCartButton from "@/components/AddToCartButton";
-import { Input } from "@headlessui/react";
+import { Input as HeadlessInput } from "@headlessui/react";
+import { Input } from "@/components/input";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
 import { DropDownToggleTheme } from "@/components/ThemeToggle";
 
-export default function ProductList({ data }: { data: Product[] }) {
+type ColumnVisibilityState = Record<keyof Product, boolean>;
+
+const defaultVisibilityState: ColumnVisibilityState = {
+  _id: false,
+  name: false,
+  price: false,
+  isActive: false,
+  category: false,
+  description: false,
+  images: false,
+  sku: false,
+  stock: false,
+  createdAt: false,
+  updatedAt: false,
+  createdBy: false,
+  imageSrc: false,
+  isAvailable: false,
+} as ColumnVisibilityState;
+
+const mergeVisibilityState = (
+  state?: Partial<ColumnVisibilityState>,
+): ColumnVisibilityState => ({
+  ...defaultVisibilityState,
+  ...(state ?? {}),
+});
+
+type Props = {
+  data: Product[];
+  isLoading?: boolean;
+  visibilityState?: Partial<ColumnVisibilityState>;
+};
+
+export default function ProductList({
+  data,
+  isLoading,
+  visibilityState,
+}: Props) {
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const columns = useMemo<ColumnDef<Product>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: (info) => (
+          <div className="flex">
+            <div className="mr-4 shrink-0">
+              {(info.row.original.images as any)?.length > 0 ? (
+                <UseImage
+                  src={(info.row.original.images as any)[0]}
+                  alt={info.getValue() as string}
+                  width={64}
+                  height={64}
+                  className="rounded-md"
+                />
+              ) : (
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 200 200"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                  className="h-full w-16 border border-gray-300 bg-white text-gray-300 dark:border-white/15 dark:bg-gray-900 dark:text-white/15"
+                >
+                  <path
+                    d="M0 0l200 200M0 200L200 0"
+                    strokeWidth={1}
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+              )}
+            </div>
+            <div>
+              <p className="text-md font-bold text-gray-900 dark:text-white">
+                {info.getValue() as string}
+              </p>
+              <p className="mt-1 text-gray-500 dark:text-gray-400">
+                {fCurrencyVND((info.row.original.price as number) || 0)}
+              </p>
+            </div>
+          </div>
+        ),
+        size: 300,
+      },
+      {
+        accessorKey: "isActive",
+        header: "Active",
+        cell: (info) => (
+          <Badge color={(info.getValue() as boolean) ? "green" : "red"}>
+            {(info.getValue() as boolean) ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        size: 100,
+      },
+    ],
+    [],
+  );
+
+  const [columnVisibility, setColumnVisibility] =
+    useState<ColumnVisibilityState>(mergeVisibilityState(visibilityState));
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+
+  const table = useReactTable({
+    data: data || [],
+    columns,
+    state: {
+      globalFilter,
+      columnVisibility,
+      columnSizing,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnSizingChange: setColumnSizing,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: "includesString",
+    columnResizeMode: "onChange",
+  });
+
+  useEffect(() => {
+    if (!visibilityState) {
+      return;
+    }
+    setColumnVisibility(mergeVisibilityState(visibilityState));
+  }, [visibilityState]);
+
   return (
-    <Table dense grid striped className=" w-full">
-      <TableHead className="sticky top-0 z-10 bg-white dark:bg-gray-950">
-        <TableRow>
-          <TableHeader>Name</TableHeader>
-          <TableHeader>Active</TableHeader>
-        </TableRow>
-      </TableHead>
-      <TableBody className="overflow-auto ">
-        {data &&
-          data.length > 0 &&
-          data.map((item) => (
-            <TableRow
-              key={item._id}
-              href={paths.dashboard.inventory.products.edit(item._id!)}
-            >
-              <TableCell className="font-medium">
-                <div className="flex">
-                  <div className="mr-4 shrink-0">
-                    {item?.images?.length > 0 ? (
-                      <UseImage
-                        src={item.images[0]}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="rounded-md"
-                      />
-                    ) : (
-                      <svg
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 200 200"
-                        preserveAspectRatio="none"
-                        aria-hidden="true"
-                        className="h-full w-16 border border-gray-300 bg-white text-gray-300 dark:border-white/15 dark:bg-gray-900 dark:text-white/15"
-                      >
-                        <path
-                          d="M0 0l200 200M0 200L200 0"
-                          strokeWidth={1}
-                          vectorEffect="non-scaling-stroke"
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <Input
+        type="text"
+        placeholder="Search by product name or price..."
+        value={globalFilter}
+        onChange={(e) => setGlobalFilter(e.target.value)}
+      />
+
+      {/* Table */}
+      <div
+        style={{
+          width: "100%",
+          minWidth: table.getTotalSize(),
+          overflow: "auto",
+        }}
+      >
+        <Table
+          dense
+          grid
+          striped
+          style={{ width: "100%", minWidth: table.getTotalSize() }}
+        >
+          <TableHead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  const size = header.getSize();
+                  return (
+                    <TableHeader
+                      key={header.id}
+                      onClick={header.column.getToggleSortingHandler()}
+                      style={{
+                        width:
+                          size === Number.MAX_SAFE_INTEGER
+                            ? "auto"
+                            : `${size}px`,
+                        position: "relative",
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {header.column.getIsSorted() && (
+                            <HeaderSortIcon
+                              sorted={
+                                header.column.getIsSorted() as "asc" | "desc"
+                              }
+                            />
+                          )}
+                        </div>
+
+                        <div
+                          role="presentation"
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className="w-1 h-6 bg-gray-300 hover:bg-blue-500 cursor-col-resize select-none touch-none"
                         />
-                      </svg>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-md font-bold text-gray-900 dark:text-white">
-                      {item.name}
-                    </p>
+                      </div>
+                    </TableHeader>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
+              <TableRowSkeleton row={3} col={columns.length} />
+            ) : table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  href={paths.dashboard.inventory.products.edit(
+                    row.original._id!,
+                  )}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  {row.getVisibleCells().map((cell) => {
+                    const size = cell.column.getSize();
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={{
+                          width:
+                            size === Number.MAX_SAFE_INTEGER
+                              ? "auto"
+                              : `${size}px`,
+                        }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            ) : (
+              !globalFilter && <TableRowNoData col={columns.length} />
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-                    <p className="mt-1 text-gray-500 dark:text-gray-400 ">
-                      {fCurrencyVND(item.price!)}
-                    </p>
-                  </div>
-                </div>
-              </TableCell>
-
-              <TableCell className="text-zinc-500 ">
-                <Badge color={item.isActive ? "green" : "red"}>
-                  {item.isActive ? "Active" : "Inactive"}
-                </Badge>
-              </TableCell>
-            </TableRow>
-          ))}
-      </TableBody>
-    </Table>
+      {/* Result summary */}
+      {globalFilter && (
+        <GlobalFilterRowCount
+          rowCount={table.getFilteredRowModel().rows.length}
+        />
+      )}
+    </div>
   );
 }
 
@@ -361,9 +554,7 @@ export function ProductGridListMain({
   "use client";
   // query
   const [query, setQuery] = useState("");
-
   const cart = useCartStore((state) => state.items);
-
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -382,7 +573,7 @@ export function ProductGridListMain({
 
         <div className="lg:mx-auto lg:w-7xl items-center gap-3 flex flex-row justify-between py-4 px-4 sm:px-6 lg:px-8 ">
           <div className=" grid grid-cols-1 ">
-            <Input
+            <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="col-start-1 row-start-1 block w-full rounded-md bg-white py-3 pr-3 pl-10 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
@@ -412,7 +603,7 @@ export function ProductGridListMain({
                 <p className="my-4 mt-12 pl-3 md:pl-0 text-xl font-sans ">
                   {category.name}
                 </p>
-                <div className="-mx-px grid grid-cols-2 border-l border-gray-200 sm:mx-0 md:grid-cols-3 lg:grid-cols-4">
+                <div className="-mx-px grid grid-cols-2 border-l border-gray-200 sm:mx-0 md:grid-cols-4 lg:grid-cols-5">
                   {filteredProducts?.length > 0 &&
                     filteredProducts
                       .filter(

@@ -12,6 +12,7 @@ import { LoadingButton } from "@/components/loading";
 import { Button } from "@/components/button";
 import { useUpdateUser } from "@/hooks/useUsers";
 import CopyToClipboard from "react-copy-to-clipboard";
+import { ModalLayout } from "@/components/modal";
 
 type FormValuesPropsChangePassword = {
   oldPassword: string;
@@ -85,44 +86,46 @@ export function UserChangePasswordForm({ currentData }: Props) {
   }, [currentData]);
 
   return (
-    <FormProvider
-      methods={methods}
-      onSubmit={methods.handleSubmit(onSubmit)}
-      className=""
-    >
-      <Fieldset className="grid grid-cols-1 gap-6" disabled={isSubmitting}>
-        <RHFTextField
-          name="oldPassword"
-          label="Old Password"
-          type="password"
-          required
-        />
-        <RHFTextField
-          name="newPassword"
-          label="New Password"
-          type="password"
-          required
-        />
-        <RHFTextField
-          name="confirmPassword"
-          label="Confirm Password"
-          type="password"
-          required
-        />
+    <ModalLayout dialogTitle={"Change Password"}>
+      <FormProvider
+        methods={methods}
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className=""
+      >
+        <Fieldset className="grid grid-cols-1 gap-6" disabled={isSubmitting}>
+          <RHFTextField
+            name="oldPassword"
+            label="Old Password"
+            type="password"
+            required
+          />
+          <RHFTextField
+            name="newPassword"
+            label="New Password"
+            type="password"
+            required
+          />
+          <RHFTextField
+            name="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            required
+          />
 
-        {updateMutation && (
-          <LoadingButton
-            autoFocus
-            isSubmitting={isSubmitting}
-            color="blue"
-            onClick={handleSubmit((data) => onSubmit(data))}
-            className="w-fit"
-          >
-            Change Password
-          </LoadingButton>
-        )}
-      </Fieldset>
-    </FormProvider>
+          {updateMutation && (
+            <LoadingButton
+              autoFocus
+              isSubmitting={isSubmitting}
+              color="blue"
+              onClick={handleSubmit((data) => onSubmit(data))}
+              className="w-fit"
+            >
+              Change Password
+            </LoadingButton>
+          )}
+        </Fieldset>
+      </FormProvider>
+    </ModalLayout>
   );
 }
 
@@ -207,55 +210,57 @@ export function UserResetPasswordForm({ currentData }: Props) {
   };
 
   return (
-    <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
-      <Fieldset className="space-y-6" disabled={isSubmitting}>
-        <div className="grid grid-cols-1 gap-6">
-          <RHFTextField
-            name="newPassword"
-            label="New Password"
-            type="password"
-            required
-          />
-          <RHFTextField
-            name="confirmPassword"
-            label="Confirm Password"
-            type="password"
-            required
-          />
-        </div>
-
-        {randomPassword && (
-          <div className="p-4 bg-green-50 text-green-800 rounded-md">
-            <p>User: {currentData?.email}</p>
-            <p>
-              New Generated Password: <strong>{randomPassword}</strong>
-              <CopyToClipboard text={randomPassword} onCopy={handleCopy}>
-                <Button color="green" type="button" className="ml-3">
-                  {copied ? "Copied!" : "Copy"}
-                </Button>
-              </CopyToClipboard>
-            </p>
+    <ModalLayout dialogTitle={"Reset Password"}>
+      <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
+        <Fieldset className="space-y-6" disabled={isSubmitting}>
+          <div className="grid grid-cols-1 gap-6">
+            <RHFTextField
+              name="newPassword"
+              label="New Password"
+              type="password"
+              required
+            />
+            <RHFTextField
+              name="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              required
+            />
           </div>
-        )}
-        <Button
-          onClick={onGenerateRandomPassword}
-          color="zinc"
-          className="w-full mb-4"
-        >
-          Generate Random Password
-        </Button>
 
-        {updateMutation && (
-          <LoadingButton
-            autoFocus
-            isSubmitting={isSubmitting}
-            color="blue"
-            onClick={handleSubmit((data) => onSubmit(data))}
+          {randomPassword && (
+            <div className="p-4 bg-green-50 text-green-800 rounded-md">
+              <p>User: {currentData?.email}</p>
+              <p>
+                New Generated Password: <strong>{randomPassword}</strong>
+                <CopyToClipboard text={randomPassword} onCopy={handleCopy}>
+                  <Button color="green" type="button" className="ml-3">
+                    {copied ? "Copied!" : "Copy"}
+                  </Button>
+                </CopyToClipboard>
+              </p>
+            </div>
+          )}
+          <Button
+            onClick={onGenerateRandomPassword}
+            color="zinc"
+            className="w-full mb-4"
           >
-            Reset Password
-          </LoadingButton>
-        )}
-      </Fieldset>
-    </FormProvider>
+            Generate Random Password
+          </Button>
+
+          {updateMutation && (
+            <LoadingButton
+              autoFocus
+              isSubmitting={isSubmitting}
+              color="blue"
+              onClick={handleSubmit((data) => onSubmit(data))}
+            >
+              Reset Password
+            </LoadingButton>
+          )}
+        </Fieldset>
+      </FormProvider>
+    </ModalLayout>
   );
 }

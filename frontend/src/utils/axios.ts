@@ -50,7 +50,7 @@ axiosInstance.interceptors.request.use(
   (error) => {
     //NProgress.done();
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor
@@ -74,9 +74,9 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(
-      (error.response && error.response.data) || "Something went wrong"
+      (error.response && error.response.data) || "Something went wrong",
     );
-  }
+  },
 );
 
 export const fetcher = (url: string) =>
@@ -97,6 +97,14 @@ export const endpoints = {
     deleteImage: (id: string) => `/categories/${id}/delete-image/`,
   },
 
+  goodsReceipts: {
+    list: "/goods-receipts",
+    details: (id: string) => `/goods-receipts/${id}`,
+    create: "/goods-receipts",
+    update: (id: string) => `/goods-receipts/${id}`,
+    delete: (id: string) => `/goods-receipts/${id}`,
+  },
+
   // Products
   products: {
     list: "/products",
@@ -107,6 +115,30 @@ export const endpoints = {
     byCategory: (categoryId: string) => `/products?category=${categoryId}`,
     uploadImages: (id: string) => `/products/${id}/upload-images`,
     deleteImage: (id: string) => `/products/${id}/delete-image/`,
+  },
+
+  // inventory
+  inventory: {
+    list: "/inventory",
+    details: (id: string) => `/inventory/${id}`,
+  },
+
+  // warehouses
+  warehouses: {
+    list: "/warehouses",
+    details: (id: string) => `/warehouses/${id}`,
+    create: "/warehouses",
+    update: (id: string) => `/warehouses/${id}`,
+    delete: (id: string) => `/warehouses/${id}`,
+  },
+
+  // Suppliers
+  suppliers: {
+    list: "/suppliers",
+    details: (id: string) => `/suppliers/${id}`,
+    create: "/suppliers",
+    update: (id: string) => `/suppliers/${id}`,
+    delete: (id: string) => `/suppliers/${id}`,
   },
 
   // Product Services

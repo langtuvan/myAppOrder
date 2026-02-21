@@ -93,6 +93,43 @@ export const paths = {
         delete: (id: string) => `/dashboard/inventory/products/${id}/delete`,
         restore: (id: string) => `/dashboard/inventory/products/${id}/restore`,
       },
+      warehouses: {
+        root: "/dashboard/inventory/warehouses",
+        list: "/dashboard/inventory/warehouses",
+        create: "/dashboard/inventory/warehouses/add",
+        edit: (id: string) => `/dashboard/inventory/warehouses/${id}/edit`,
+        view: (id: string) => `/dashboard/inventory/warehouses/${id}`,
+        delete: (id: string) => `/dashboard/inventory/warehouses/${id}/delete`,
+        restore: (id: string) =>
+          `/dashboard/inventory/warehouses/${id}/restore`,
+      },
+      goodsReceipts: {
+        root: "/dashboard/inventory/goods-receipts",
+        list: "/dashboard/inventory/goods-receipts",
+        create: "/dashboard/inventory/goods-receipts/add",
+        edit: (id: string) => `/dashboard/inventory/goods-receipts/${id}/edit`,
+        view: (id: string) => `/dashboard/inventory/goods-receipts/${id}`,
+        delete: (id: string) =>
+          `/dashboard/inventory/goods-receipts/${id}/delete`,
+        restore: (id: string) =>
+          `/dashboard/inventory/goods-receipts/${id}/restore`,
+      },
+      inventory: {
+        root: "/dashboard/inventory/inventory",
+        list: "/dashboard/inventory/inventory",      
+      },
+      suppliers: {
+        root: "/dashboard/inventory/suppliers",
+        list: "/dashboard/inventory/suppliers",
+        create: "/dashboard/inventory/suppliers/add",
+        edit: (id: string) => `/dashboard/inventory/suppliers/${id}/edit`,
+        view: (id: string) => `/dashboard/inventory/suppliers/${id}`,
+        delete: (id: string) => `/dashboard/inventory/suppliers/${id}/delete`,
+      },
+      user: {
+        root: "/dashboard/inventory/user",
+        list: "/dashboard/inventory/user",
+      },
     },
     profile: "/dashboard/profile",
     settings: "/dashboard/settings",

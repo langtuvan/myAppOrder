@@ -1,13 +1,9 @@
 "use client";
-import { Button } from "@/components/button";
+import { useParams } from "next/navigation";
 import { ErrorScreen } from "@/components/error";
-import { Heading } from "@/components/heading";
 import { LoadingScreen } from "@/components/loading";
 import { useUser } from "@/hooks/useUsers";
-import paths from "@/router/path";
 import UserNewEditForm from "@/sections/form/UserNewEditForm";
-import { isValidObjectId } from "@/utils/validate";
-import { useParams } from "next/navigation";
 
 export default function UserPage() {
   //check if editing or creating and get id
@@ -20,17 +16,5 @@ export default function UserPage() {
   if (error) {
     return <ErrorScreen error={error as any} refetch={refetch} />;
   }
-  return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
-        <Heading>Edit User</Heading>
-        <div className="flex gap-4">
-          <Button href={paths.dashboard.system.users.list} plain>
-            Back
-          </Button>
-        </div>
-      </div>
-      <UserNewEditForm currentData={data} />
-    </div>
-  );
+  return <UserNewEditForm currentData={data} />;
 }

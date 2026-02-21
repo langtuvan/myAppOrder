@@ -29,10 +29,16 @@ import { CategoryType } from "@/types/category";
 
 import axiosInstance, { endpoints } from "@/utils/axios";
 import { validateCategory } from "@/actions/fetchData";
+import { ModalLayout } from "@/components/modal";
+import language from "@/language/language";
+
 interface FormValuesProps extends CreateCategoryDto {}
 type Props = {
   currentData?: Category;
 };
+
+const formattedMessage = language.inventory.categories;
+const formattedCommon = language.common;
 
 export default function CategoryNewEditForm({ currentData }: Props) {
   const isEditing = !!currentData;
@@ -50,7 +56,7 @@ export default function CategoryNewEditForm({ currentData }: Props) {
       images: currentData?.images || [],
       isActive: currentData?.isActive ?? true,
     }),
-    [currentData]
+    [currentData],
   );
 
   const schema = Yup.object().shape({
@@ -123,7 +129,7 @@ export default function CategoryNewEditForm({ currentData }: Props) {
   const onDeleteImage = async (index: number) => {
     const currentImages = getValues("images") || [];
     const updatedImages = currentImages.filter(
-      (_: any, imgIndex: number) => imgIndex !== index
+      (_: any, imgIndex: number) => imgIndex !== index,
     );
     setValue("images", updatedImages, {
       shouldValidate: true,
@@ -139,7 +145,7 @@ export default function CategoryNewEditForm({ currentData }: Props) {
           endpoints.products.deleteImage(currentData?._id || ""),
           {
             imageUrl: imageName,
-          }
+          },
         );
       } catch (error) {
         console.error("Error deleting image:", error);
@@ -147,77 +153,75 @@ export default function CategoryNewEditForm({ currentData }: Props) {
     }
   };
 
-  const formattedLanguage = {
-    title: "Category",
-    name: "Name",
-    description: "Description",
-    type: "Type",
-    image: "Image",
-    isActive: "Active Status",
-    save: "Save",
-  };
-
   return (
-    <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
-      <Fieldset className="space-y-6" disabled={isSubmitting}>
-        <div className="grid grid-cols-1 gap-6">
-          <RHFTextField name="name" label={formattedLanguage.name} required />
+    <ModalLayout
+      dialogTitle={isEditing ? formattedCommon.edit : formattedCommon.add}
+    >
+      <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
+        <Fieldset className="space-y-6" disabled={isSubmitting}>
+          <div className="grid grid-cols-1 gap-6">
+            <RHFTextField
+              name="name"
+              label={formattedMessage.form.name}
+              required
+            />
 
-          <RHFUpload
-            label={formattedLanguage.image}
-            name="images"
-            thumbnail
-            multiple
-            uploadAcceptType="image"
-            onRemove={(index) => onDeleteImage(index as number)}
-            //onRemoveAll={() => console.log('onRemoveALL')}
-          />
+            <RHFUpload
+              label={formattedMessage.form.images}
+              name="images"
+              thumbnail
+              multiple
+              uploadAcceptType="image"
+              onRemove={(index) => onDeleteImage(index as number)}
+              //onRemoveAll={() => console.log('onRemoveALL')}
+            />
 
-          <RHFSelectField
-            name="type"
-            label={formattedLanguage.type}
-            disabled
-            options={
-              CategoryType
-                ? Object.values(CategoryType).map((type) => ({
-                    label: type.charAt(0) + type.slice(1).toLowerCase(), // Capitalize first letter
-                    value: type,
-                  }))
-                : []
-            }
-            required
-          />
+            <RHFSelectField
+              name="type"
+              label={formattedMessage.form.type}
+              disabled
+              options={
+                CategoryType
+                  ? Object.values(CategoryType).map((type) => ({
+                      label: type.charAt(0) + type.slice(1).toLowerCase(), // Capitalize first letter
+                      value: type,
+                    }))
+                  : []
+              }
+              required
+            />
 
-          <RHFTextField
-            name="description"
-            label={formattedLanguage.description}
-            required
-          />
-          <RHFCheckBoxField
-            name="isActive"
-            label={formattedLanguage.isActive}
-            color="blue"
-          />
-        </div>
+            <RHFTextField
+              name="description"
+              label={formattedMessage.form.description}
+              required
+            />
+            <RHFCheckBoxField
+              name="isActive"
+              label={formattedMessage.form.isActive}
+              color="blue"
+            />
+          </div>
 
-        {isEditing && deleteMutation && (
-          <Button plain onClick={handleSubmit(() => onDelete())}>
-            <TrashIcon />
-          </Button>
-        )}
+          {isEditing && deleteMutation && (
+            <Button plain onClick={handleSubmit(() => onDelete())}>
+              <TrashIcon />
+            </Button>
+          )}
 
-        {(createMutation || updateMutation) && (
-          <LoadingButton
-            //type="submit"
-            autoFocus
-            isSubmitting={isSubmitting}
-            color="blue"
-            onClick={handleSubmit((data) => onSubmit(data))}
-          >
-            {formattedLanguage.save}
-          </LoadingButton>
-        )}
-      </Fieldset>
-    </FormProvider>
+          {(createMutation || updateMutation) && (
+            <LoadingButton
+              //type="submit"
+              autoFocus
+              isSubmitting={isSubmitting}
+              color="blue"
+              onClick={handleSubmit((data) => onSubmit(data))}
+            >
+              {formattedCommon.save}
+            </LoadingButton>
+          )}
+        </Fieldset>
+      </FormProvider>
+    </ModalLayout>
   );
 }

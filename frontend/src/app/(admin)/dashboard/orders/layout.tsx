@@ -1,6 +1,6 @@
 "use client";
-import { HOST_API } from "@/config-global";
-import { useAuth, usePermission } from "@/hooks";
+
+import {  usePermission } from "@/hooks";
 
 export default function OrdersLayout({
   modal,
@@ -22,20 +22,3 @@ export default function OrdersLayout({
   );
 }
 
-// export default async function OrdersLayout({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) {
-//   const []: [] = await Promise.all([
-//     fetch(HOST_API + "/products", {
-//       method: "GET",
-//       next: { tags: ["products"] },
-//     }).then((res) => res.json()),
-//     fetch(HOST_API + "/categories", {
-//       method: "GET",
-//       next: { tags: ["categories"] },
-//     }).then((res) => res.json()),
-//   ]);
-//   return <>{children}</>;
-// }

@@ -10,7 +10,7 @@ import {
   Select,
 } from "@headlessui/react";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import clsx from "clsx";
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import vietNamLocation from "@/mock/provinces_and_wards_full.json";
@@ -149,28 +149,26 @@ export default function CheckOut() {
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
   const route = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+
+  const [isPending, startTransition] = useTransition();
 
   const onSubmit = async (data: any) => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate async operation
     const _id = uuidv7();
-    try {
-      await axiosInstance.post("/orders/public", {
-        ...data,
-        _id,
-        items,
-      });
+    startTransition(async () => {
+      try {
+        await axiosInstance.post("/orders/public", {
+          ...data,
+          _id,
+          items,
+        });
+        clear();
+        route.replace("/order-detail/" + _id);
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate async operation
+      } catch (error) {
+        console.error("Failed to create order:", error);
+      }
+    });
 
-      clear();
-      route.replace("/order-detail/" + _id);
-    } catch (error) {
-      console.error("Failed to create order:", error);
-    }
-
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
     // Handle form submission here (e.g., send to API)
   };
 
@@ -190,7 +188,7 @@ export default function CheckOut() {
     setValue("ward", value || "", { shouldValidate: true });
   };
 
-  if (isLoading) {
+  if (isPending) {
     return <LoadingScreen />;
   }
 

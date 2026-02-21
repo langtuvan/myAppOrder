@@ -42,7 +42,7 @@ import { useAuth } from "@/hooks";
 import { KeyIcon } from "@heroicons/react/24/outline";
 import { DropDownToggleTheme } from "@/components/ThemeToggle";
 import { OrderStatus } from "@/hooks/useOrders";
-import { useMemo } from "react";
+import { act, useMemo } from "react";
 
 const navItems = [
   { label: "Report", url: "/dashboard", action: "orders:update" },
@@ -51,6 +51,11 @@ const navItems = [
     url: "/dashboard/orders",
     action: "orders:read",
     children: [
+      {
+        label: "Create Order",
+        url: "/dashboard/orders/add",
+        action: "orders:create",
+      },
       {
         label: "Order List",
         url: "/dashboard/orders",
@@ -79,29 +84,14 @@ const navItems = [
     ],
   },
   {
-    label: "System",
+    label: "Hệ Thống",
     url: "/dashboard/system",
-    children: [
-      { label: "Users", url: "/dashboard/system/users", action: "users:read" },
-      { label: "Roles", url: "/dashboard/system/roles", action: "roles:read" },
-    ],
+    action: "users:read",
   },
   {
-    label: "Inventory",
+    label: "Kho Hàng",
     url: "/dashboard/inventory",
-    //action: "inventory:view",
-    children: [
-      {
-        label: "Categories",
-        url: "/dashboard/inventory/categories",
-        action: "categories:read",
-      },
-      {
-        label: "Products",
-        url: "/dashboard/inventory/products",
-        action: "products:read",
-      },
-    ],
+    action: "products:read",
   },
 ];
 
@@ -118,13 +108,15 @@ export default function AdminLayout({
     [user],
   );
 
+  const activeLink = pathName.split("/").slice(0, 3).join("/");
+
   return (
     <StackedLayout
       navbar={
         <Navbar>
           <NavbarSection className="max-lg:hidden">
             {navItems.map(({ label, url, action, children }) => {
-              const current = pathName.split("/").slice(0, 3).join("/") === url;
+              const current = activeLink === url;
               if (children && children.length > 0) {
                 // check children if any permission is included
                 const hasPermission = children.some(({ action = "" }) =>
@@ -163,7 +155,7 @@ export default function AdminLayout({
                 <NavbarItem
                   key={label + "navbaritem"}
                   href={url}
-                  current={pathName === url}
+                  current={current}
                   className={permissions.includes(action!) ? "" : "hidden"}
                 >
                   {label}

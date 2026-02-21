@@ -56,51 +56,51 @@ export class DatabaseService {
     private readonly amenitiesService: AmenitiesService,
   ) {}
 
-  async seedDatabase(): Promise<void> {
-    const startTime = Date.now();
-    this.logger.log('Starting database seeding...');
+  // async seedDatabase(): Promise<void> {
+  //   const startTime = Date.now();
+  //   this.logger.log('Starting database seeding...');
 
-    try {
-      // 1. Create default modules
-      await this.createDefaultModules();
+  //   try {
+  //     // 1. Create default modules
+  //     await this.createDefaultModules();
 
-      // 2. Create default permissions
-      await this.createDefaultPermissions();
+  //     // 2. Create default permissions
+  //     await this.createDefaultPermissions();
 
-      // 3. Create default roles
-      await this.createDefaultRoles();
+  //     // 3. Create default roles
+  //     await this.createDefaultRoles();
 
-      // 4. Create default admin user
-      await this.createDefaultUsers();
+  //     // 4. Create default admin user
+  //     await this.createDefaultUsers();
 
-      // 5. Create default faculties
-      await this.createDefaultFaculties();
+  //     // 5. Create default faculties
+  //     await this.createDefaultFaculties();
 
-      // 6. Create default rooms
-      await this.createDefaultRooms();
+  //     // 6. Create default rooms
+  //     await this.createDefaultRooms();
 
-      // 7. Create default categories
-      await this.createDefaultCategories();
+  //     // 7. Create default categories
+  //     await this.createDefaultCategories();
 
-      // 8. Create default products
-      await this.createDefaultProducts();
+  //     // 8. Create default products
+  //     await this.createDefaultProducts();
 
-      // 9. Create default product services
-      await this.createDefaultProductServices();
+  //     // 9. Create default product services
+  //     await this.createDefaultProductServices();
 
-      // 10. Create default amenities
-      await this.createDefaultAmenities();
+  //     // 10. Create default amenities
+  //     await this.createDefaultAmenities();
 
-      const duration = Date.now() - startTime;
-    } catch (error) {
-      this.logger.error(
-        `Database seeding failed: ${error.message}`,
-        error.stack,
-      );
+  //     const duration = Date.now() - startTime;
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Database seeding failed: ${error.message}`,
+  //       error.stack,
+  //     );
 
-      throw error;
-    }
-  }
+  //     throw error;
+  //   }
+  // }
 
   private async createDefaultModules(): Promise<void> {
     this.logger.log('Creating default modules...');

@@ -68,8 +68,6 @@ const authReducer = (state: IAuthState, action: AuthAction): IAuthState => {
         isLoading: action.payload,
       };
 
-
-
     default:
       return state;
   }
@@ -95,18 +93,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const accessToken = await localStorage.getItem(STORAGE_KEY);
       axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
       const response = await axiosInstance.post<ILoginResponse>(
-        endpoints.auth.me
+        endpoints.auth.me,
       );
       const { user, menu } = response.data;
 
-      const currentFaculty = await localStorage.getItem(CURRENT_FACULTY);
+      //const currentFaculty = await localStorage.getItem(CURRENT_FACULTY);
 
       dispatch({
         type: "INITIALIZE",
         payload: {
           user,
           menu,
-          
         },
       });
     } catch (error) {
@@ -128,7 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await axiosInstance.post<ILoginResponse>(
         endpoints.auth.login,
-        [email, password]
+        [email, password],
       );
 
       const { user, menu, accessToken } = response.data;
@@ -156,7 +153,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await localStorage.removeItem(STORAGE_KEY);
       axiosInstance.defaults.headers.common.Authorization = `Bearer `;
     } catch (error) {
-
     } finally {
       dispatch({ type: "LOGOUT" });
     }
@@ -168,7 +164,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await axiosInstance.post<ILoginResponse>(
         "/auth/register",
-        data
+        data,
       );
 
       const { user, menu } = response.data;
@@ -193,7 +189,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await axiosInstance.post<ILoginResponse>(
         endpoints.auth.me,
       );
-      const { user, menu,  } = response.data;
+      const { user, menu } = response.data;
 
       dispatch({
         type: "INITIALIZE",
@@ -213,10 +209,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return state.user.role.permissions.some(
         (permission: any) =>
           //permission.resource === resource &&
-          permission.action === action && permission.isActive
+          permission.action === action && permission.isActive,
       );
     },
-    [state.user]
+    [state.user],
   );
 
   const hasAnyPermission = useCallback(
@@ -228,7 +224,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return hasPermission(resource, action);
       });
     },
-    [state.user, hasPermission]
+    [state.user, hasPermission],
   );
 
   const hasAllPermissions = useCallback(
@@ -240,10 +236,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return hasPermission(resource, action);
       });
     },
-    [state.user, hasPermission]
+    [state.user, hasPermission],
   );
-
-
 
   // Memoized context value
   const contextValue = useMemo(
@@ -268,7 +262,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       hasAnyPermission,
       hasAllPermissions,
       //
-    ]
+    ],
   );
 
   return (

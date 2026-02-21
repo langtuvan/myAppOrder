@@ -42,9 +42,9 @@ export function ModalLayout({
       className={className}
     >
       <DialogTitle>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           {dialogTitle && (
-            <Heading className="uppercase text-lg">{dialogTitle}</Heading>
+            <Heading className="uppercase">{dialogTitle}</Heading>
           )}
           <Button plain onClick={() => router.back()}>
             <XMarkIcon />

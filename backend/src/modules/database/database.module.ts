@@ -33,6 +33,6 @@ export class DatabaseModule implements OnModuleInit {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async onModuleInit() {
-    await this.databaseService.seedDatabase();
+    //await this.databaseService.seedDatabase();
   }
 }

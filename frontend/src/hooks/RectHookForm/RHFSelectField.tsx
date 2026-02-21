@@ -47,7 +47,7 @@ export default function RHFSelectField({
       render={({ field, fieldState: { error } }) => (
         <Field className={className}>
           {label && (
-            <Label>
+            <Label className="text-nowrap">
               {label} {required && <Required />}
             </Label>
           )}

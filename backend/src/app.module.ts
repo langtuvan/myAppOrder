@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -28,6 +28,12 @@ import { ItemModule } from './modules/item/item.module';
 import { AmenitiesModule } from './modules/amenities/amenities.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { HealthModule } from './modules/health/health.module';
+import { WarehousesModule } from './modules/warehouses/warehouses.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { InventoryTransactionsModule } from './modules/inventory_transactions/inventory_transactions.module';
+import { GoodsReceiptsModule } from './modules/goods_receipts/goods-receipts.module';
+import { GoodsReceiptItemsModule } from './modules/goods_receipt_items/goods-receipt-items.module';
+import { SupplierModule } from './modules/supplier/supplier.module';
 
 @Module({
   imports: [
@@ -57,6 +63,7 @@ import { HealthModule } from './modules/health/health.module';
         },
       },
     }),
+
     // Database with global soft delete plugin
     mongooseConfig,
     // Database initialization with seeding
@@ -82,10 +89,15 @@ import { HealthModule } from './modules/health/health.module';
     AmenitiesModule,
     BookingModule,
     HealthModule,
+    WarehousesModule,
+    InventoryModule,
+    InventoryTransactionsModule,
+    GoodsReceiptsModule,
+    GoodsReceiptItemsModule,
+    SupplierModule,
 
     LoggerModule,
     // Database seeding (last)
-    DatabaseModule,
   ],
   controllers: [],
   providers: [

@@ -21,6 +21,7 @@ import { Button } from "@/components/button";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useCreateUser, useDeleteUser, useUpdateUser } from "@/hooks/useUsers";
 import { useRoles } from "@/hooks/useRoles";
+import { ModalLayout } from "@/components/modal";
 
 interface FormValuesProps extends CreateUserDto {}
 type Props = {
@@ -49,7 +50,7 @@ export default function UserNewEditForm({ currentData }: Props) {
       role: currentData?.role._id || "",
       gender: currentData?.gender || "male",
     }),
-    [currentData]
+    [currentData],
   );
 
   const schema = Yup.object().shape({
@@ -104,7 +105,7 @@ export default function UserNewEditForm({ currentData }: Props) {
   }, [currentData]);
 
   return (
-    <>
+    <ModalLayout dialogTitle={isEditing ? "Edit Supplier" : "Add Supplier"}>
       <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 gap-6">
@@ -147,7 +148,7 @@ export default function UserNewEditForm({ currentData }: Props) {
                       (role: any) => ({
                         label: role.name,
                         value: role._id,
-                      })
+                      }),
                     )
                   : []
               }
@@ -176,6 +177,6 @@ export default function UserNewEditForm({ currentData }: Props) {
           )}
         </Fieldset>
       </FormProvider>
-    </>
+    </ModalLayout>
   );
 }

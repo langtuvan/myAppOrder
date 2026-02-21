@@ -28,6 +28,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { CategoryType } from "@/types/category";
 import axiosInstance, { endpoints } from "@/utils/axios";
 import { validateProduct } from "@/actions/fetchData";
+import { ModalLayout } from "@/components/modal";
 
 interface FormValuesProps extends CreateProductDto {}
 type Props = {
@@ -40,7 +41,7 @@ export default function ProductNewEditForm({ currentData }: Props) {
   // fetch data options
   const { data: categories = [] } = useCategories();
   const categoriesFiltered = categories.filter(
-    (category) => category.type === CategoryType.PRODUCT
+    (category) => category.type === CategoryType.PRODUCT,
   );
 
   // Initialize mutation hooks
@@ -61,7 +62,7 @@ export default function ProductNewEditForm({ currentData }: Props) {
       isActive: currentData?.isActive || true,
       sku: currentData?.sku || "",
     }),
-    [currentData]
+    [currentData],
   );
 
   const schema = Yup.object().shape({
@@ -139,7 +140,7 @@ export default function ProductNewEditForm({ currentData }: Props) {
   const onDeleteImage = async (index: number) => {
     const currentImages = getValues("images") || [];
     const updatedImages = currentImages.filter(
-      (_: any, imgIndex: number) => imgIndex !== index
+      (_: any, imgIndex: number) => imgIndex !== index,
     );
     setValue("images", updatedImages, {
       shouldValidate: true,
@@ -155,7 +156,7 @@ export default function ProductNewEditForm({ currentData }: Props) {
           endpoints.products.deleteImage(currentData?._id || ""),
           {
             imageUrl: imageName,
-          }
+          },
         );
       } catch (error) {
         console.error("Error deleting image:", error);
@@ -177,68 +178,74 @@ export default function ProductNewEditForm({ currentData }: Props) {
   };
 
   return (
-    <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
-      <Fieldset className="space-y-6" disabled={isSubmitting}>
-        <div className="grid grid-cols-1 gap-6">
-          <RHFTextField name="name" label={formattedLanguage.name} required />
+    <ModalLayout dialogTitle={isEditing ? "Edit Product" : "Add Product"}>
+      <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
+        <Fieldset className="space-y-6" disabled={isSubmitting}>
+          <div className="grid grid-cols-1 gap-6">
+            <RHFTextField name="name" label={formattedLanguage.name} required />
 
-          <RHFUpload
-            label="Pictures"
-            name="images"
-            thumbnail
-            multiple
-            uploadAcceptType="image"
-            onRemove={(index) => onDeleteImage(index as number)}
-            //onRemoveAll={() => console.log('onRemoveALL')}
-          />
+            <RHFUpload
+              label="Pictures"
+              name="images"
+              thumbnail
+              multiple
+              uploadAcceptType="image"
+              onRemove={(index) => onDeleteImage(index as number)}
+              //onRemoveAll={() => console.log('onRemoveALL')}
+            />
 
-          <RHFSelectField
-            name="category"
-            label={formattedLanguage.category}
-            options={[
-              { _id: "", name: "Select a category" },
-              ...categoriesFiltered,
-            ]?.map((category) => ({
-              value: category._id,
-              label: category.name,
-            }))}
-          />
-          <RHFTextField name="sku" label={formattedLanguage.sku} required />
-          <RHFTextField name="price" label={formattedLanguage.price} required />
+            <RHFSelectField
+              name="category"
+              label={formattedLanguage.category}
+              options={[
+                { _id: "", name: "Select a category" },
+                ...categoriesFiltered,
+              ]?.map((category) => ({
+                value: category._id,
+                label: category.name,
+              }))}
+            />
+            <RHFTextField name="sku" label={formattedLanguage.sku} required />
+            <RHFTextField
+              name="price"
+              label={formattedLanguage.price}
+              required
+            />
 
-          <RHFTextField
-            name="description"
-            label={formattedLanguage.description}
-            required
-          />
+            <RHFTextField
+              name="description"
+              label={formattedLanguage.description}
+              required
+            />
 
-          <RHFTextField
-            disabled
-            name="stock"
-            label={formattedLanguage.stock}
-            required
-          />
+            <RHFTextField
+              disabled
+              name="stock"
+              label={formattedLanguage.stock}
+              required
+            />
 
-          <RHFCheckBoxField name="isActive" label="Active" color="blue" />
-        </div>
+            <RHFCheckBoxField name="isActive" label="Active" color="blue" />
+          </div>
 
-        {isEditing && deleteMutation && (
-          <Button plain onClick={handleSubmit(() => onDelete())}>
-            <TrashIcon />
-          </Button>
-        )}
+          {isEditing && deleteMutation && (
+            <Button plain onClick={handleSubmit(() => onDelete())}>
+              <TrashIcon />
+            </Button>
+          )}
 
-        {(createMutation || updateMutation) && (
-          <LoadingButton
-            autoFocus
-            isSubmitting={isSubmitting}
-            color="blue"
-            onClick={handleSubmit((data) => onSubmit(data))}
-          >
-            Save
-          </LoadingButton>
-        )}
-      </Fieldset>
-    </FormProvider>
+          {(createMutation || updateMutation) && (
+            <LoadingButton
+              autoFocus
+              isSubmitting={isSubmitting}
+              color="blue"
+              onClick={handleSubmit((data) => onSubmit(data))}
+            >
+              Save
+            </LoadingButton>
+          )}
+        </Fieldset>
+      </FormProvider>
+    </ModalLayout>
   );
 }

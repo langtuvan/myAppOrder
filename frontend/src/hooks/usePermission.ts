@@ -1,7 +1,7 @@
 "use client";
 
+import { OrderStatus } from "@/types/order";
 import { useAuth } from "./useAuth";
-import { OrderStatus } from "./useOrders";
 
 // ----------------------------------------------------------------------
 
@@ -85,5 +85,15 @@ export function usePermission() {
       hasPermission("goodsReceipts", "goodsReceipts:update"),
     canDeleteGoodsReceipts: () =>
       hasPermission("goodsReceipts", "goodsReceipts:delete"),
+
+    // issue receipts
+    canViewIssueReceipts: () =>
+      hasPermission("issueReceipts", "issueReceipts:read"),
+    canCreateIssueReceipts: () =>
+      hasPermission("issueReceipts", "issueReceipts:create"),
+    canEditIssueReceipts: () =>
+      hasPermission("issueReceipts", "issueReceipts:update"),
+    canDeleteIssueReceipts: () =>
+      hasPermission("issueReceipts", "issueReceipts:delete"),
   };
 }

@@ -78,6 +78,24 @@ export const en = {
       list: "Goods Receipts List",
       form: {},
     },
+    issueReceipts: {
+      title: "Issue Receipts",
+      list: "Issue Receipts List",
+      form: {
+        name: "Issue Receipt Name",
+        customer: "Customer",
+        warehouse: "Warehouse",
+        note: "Note",
+        deliveryNote: "Delivery Note",
+        deliveryDate: "Delivery Date",
+        items: {
+          product: "Product",
+          warehouse: "Warehouse",
+          quantity: "Quantity",
+          price: "Price",
+        },
+      },
+    },
   },
   system: {
     users: {

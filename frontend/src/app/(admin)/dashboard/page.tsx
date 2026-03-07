@@ -23,11 +23,12 @@ import {
   subDays,
 } from "date-fns";
 import { useAuth } from "@/hooks";
-import { useOrders, OrderType } from "@/hooks/useOrders";
+import { useOrders } from "@/hooks/useOrders";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Strong, Text } from "@/components/text";
 import { Heading } from "@/components/heading";
+import { OrderType } from "@/types/order";
 
 ChartJS.register(
   CategoryScale,
@@ -38,7 +39,7 @@ ChartJS.register(
   LineElement,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 );
 
 type NumericRecord = Record<string, number>;
@@ -218,7 +219,7 @@ function aggregateSales(orders: any[], start: Date, end: Date) {
     inStoreSeries.push(bucket.inStoreAmount);
     deliverySeries.push(bucket.deliveryAmount);
     totals.push(
-      bucket.websiteAmount + bucket.inStoreAmount + bucket.deliveryAmount
+      bucket.websiteAmount + bucket.inStoreAmount + bucket.deliveryAmount,
     );
     websiteTotal += bucket.websiteAmount;
     inStoreTotal += bucket.inStoreAmount;
@@ -237,7 +238,7 @@ function aggregateSales(orders: any[], start: Date, end: Date) {
       }
       return acc;
     },
-    { dateKey: format(end, "yyyy-MM-dd"), total: 0 }
+    { dateKey: format(end, "yyyy-MM-dd"), total: 0 },
   );
 
   return {
@@ -273,12 +274,12 @@ export default function SalesReportPage() {
 
   const { start, end } = useMemo(
     () => normalizeRange(startDate, endDate),
-    [startDate, endDate]
+    [startDate, endDate],
   );
 
   const sales = useMemo(
     () => aggregateSales(ordersData, start, end),
-    [ordersData, start, end]
+    [ordersData, start, end],
   );
 
   const isLoading = loadingOrders;
@@ -378,7 +379,7 @@ export default function SalesReportPage() {
             {quickRanges.map((range) => {
               const rangeStart = format(
                 subDays(today, range.days),
-                "yyyy-MM-dd"
+                "yyyy-MM-dd",
               );
               const rangeEnd =
                 range.days === 0 || range.days === 1 ? rangeStart : defaultEnd;
@@ -469,40 +470,40 @@ export default function SalesReportPage() {
             <StatLine
               label="Website avg/day"
               value={currency.format(
-                safeAverage(sales.summary.websiteTotal, sales.labels.length)
+                safeAverage(sales.summary.websiteTotal, sales.labels.length),
               )}
             />
             <StatLine
               label="In-store avg/day"
               value={currency.format(
-                safeAverage(sales.summary.inStoreTotal, sales.labels.length)
+                safeAverage(sales.summary.inStoreTotal, sales.labels.length),
               )}
             />
             <StatLine
               label="Delivery avg/day"
               value={currency.format(
-                safeAverage(sales.summary.deliveryTotal, sales.labels.length)
+                safeAverage(sales.summary.deliveryTotal, sales.labels.length),
               )}
             />
             <StatLine
               label="Website share"
               value={`${ratio(
                 sales.summary.websiteTotal,
-                sales.summary.combined
+                sales.summary.combined,
               )}%`}
             />
             <StatLine
               label="In-store share"
               value={`${ratio(
                 sales.summary.inStoreTotal,
-                sales.summary.combined
+                sales.summary.combined,
               )}%`}
             />
             <StatLine
               label="Delivery share"
               value={`${ratio(
                 sales.summary.deliveryTotal,
-                sales.summary.combined
+                sales.summary.combined,
               )}%`}
             />
             <StatLine label="Peak day" value={bestDayLabel} />

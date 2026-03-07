@@ -1,9 +1,18 @@
 "use client";
 import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
-import { Order, OrderType, PaymentMethod } from "@/hooks/useOrders";
+import { Order, OrderType, PaymentMethod } from "@/types/order";
 import { fCurrencyVND } from "@/utils/format-number";
 import { Button } from "./button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+  TableHead,
+} from "./table";
+import { Text } from "./text";
 
 interface PrintBillProps {
   orderData: Order;
@@ -31,45 +40,45 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-xl w-fit max-h-[90vh] overflow-auto">
+      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg shadow-xl w-fit max-h-[90vh] overflow-auto">
         <div className="p-6 space-y-4">
           {/* Print Content */}
           <div
             ref={printRef}
-            className="p-4 bg-white"
+            className="p-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             style={{ width: "80mm" }}
           >
             {/* Header */}
             <div className="text-center border-b border-gray-300 pb-2 mb-3">
               <h1 className="text-xl font-bold">Order Bill</h1>
-              <p className="text-xs text-gray-600">Thank you for your order!</p>
+              <Text className="text-xs ">Thank you for your order!</Text>
             </div>
 
             {/* Order Info */}
             <div className="mb-3 text-xs">
               <div className="space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Order #:</span>
+                <Text className="flex justify-between">
+                  <span>Order #:</span>
                   <span className="font-semibold">
                     {orderData.trackingNumber || "N/A"}
                   </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Date:</span>
+                </Text>
+                <Text className="flex justify-between">
+                  <span>Date:</span>
                   <span className="font-semibold">
                     {new Date().toLocaleDateString()}
                   </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type:</span>
+                </Text>
+                <Text className="flex justify-between">
+                  <span>Type:</span>
                   <span className="font-semibold">{orderData.orderType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Payment:</span>
+                </Text>
+                <Text className="flex justify-between">
+                  <span>Payment:</span>
                   <span className="font-semibold">
-                    {orderData.paymentMethod}
+                    {orderData.payment.paymentMethod}
                   </span>
-                </div>
+                </Text>
               </div>
             </div>
 
@@ -77,38 +86,36 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
             <div className="mb-3 border-t pt-2">
               <h2 className="text-sm font-bold mb-1">Customer</h2>
               <div className="text-xs space-y-1">
-                <p>{orderData.customerName}</p>
-                <p>{orderData.customerPhone}</p>
-                {orderData.orderType === OrderType.DELIVERY &&
-                  orderData.address && (
-                    <p className="text-gray-600">{orderData.address}</p>
-                  )}
+                <Text>{orderData.customer?.firstName}</Text>
+                <Text>{orderData.customer?.phone}</Text>
               </div>
             </div>
 
             {/* Items Table */}
             <div className="mb-3 border-t pt-2">
               <h2 className="text-sm font-bold mb-2">Items</h2>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-1">Item</th>
-                    <th className="text-center py-1">Qty</th>
-                    <th className="text-right py-1">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table className="w-full" dense grid bleed>
+                <TableHead>
+                  <TableRow className="border-b">
+                    <TableHeader className="text-left py-1">Item</TableHeader>
+                    <TableHeader className="text-center py-1">Qty</TableHeader>
+                    <TableHeader className="text-right py-1">Total</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {orderData.items?.map((item, index) => (
-                    <tr key={index} className="border-b border-dashed">
-                      <td className="py-1">{item.productName}</td>
-                      <td className="text-center py-1">{item.quantity}</td>
-                      <td className="text-right py-1">
+                    <TableRow key={index} className="border-b border-dashed">
+                      <TableCell className="py-1">{item.productName}</TableCell>
+                      <TableCell className="text-center py-1">
+                        {item.quantity}
+                      </TableCell>
+                      <TableCell className="text-right py-1">
                         {fCurrencyVND(item.price * item.quantity)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
 
             {/* Summary */}
@@ -125,40 +132,42 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
                     )}
                   </span>
                 </div>
-                {orderData.deliveryPrice > 0 && (
+                {orderData.billing.deliveryPrice > 0 && (
                   <div className="flex justify-between">
                     <span>Delivery:</span>
                     <span className="font-semibold">
-                      {fCurrencyVND(orderData.deliveryPrice)}
+                      {fCurrencyVND(orderData.billing.deliveryPrice)}
                     </span>
                   </div>
                 )}
-                {orderData.taxes > 0 && (
+                {/* {orderData.billing.taxes > 0 && (
                   <div className="flex justify-between">
                     <span>Tax:</span>
                     <span className="font-semibold">
                       {fCurrencyVND(orderData.taxes)}
                     </span>
                   </div>
-                )}
+                )} */}
                 <div className="flex justify-between text-sm font-bold border-t pt-1 mt-1">
                   <span>Total:</span>
-                  <span>{fCurrencyVND(orderData.totalAmount || 0)}</span>
+                  <span>
+                    {fCurrencyVND(orderData.billing.totalAmount || 0)}
+                  </span>
                 </div>
-                {orderData.paymentMethod === PaymentMethod.CASH && (
+                {orderData.payment.paymentMethod === PaymentMethod.CASH && (
                   <>
                     <div className="flex justify-between">
                       <span>Paid:</span>
                       <span className="font-semibold">
-                        {fCurrencyVND(orderData.customerPay || 0)}
+                        {fCurrencyVND(orderData.billing.customerPay || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Change:</span>
                       <span className="font-semibold">
                         {fCurrencyVND(
-                          (orderData.customerPay || 0) -
-                            (orderData.totalAmount || 0),
+                          (orderData.billing.customerPay || 0) -
+                            (orderData.billing.totalAmount || 0),
                         )}
                       </span>
                     </div>

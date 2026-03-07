@@ -104,6 +104,13 @@ export const endpoints = {
     update: (id: string) => `/goods-receipts/${id}`,
     delete: (id: string) => `/goods-receipts/${id}`,
   },
+  issueReceipts: {
+    list: "/issue-receipts",
+    details: (id: string) => `/issue-receipts/${id}`,
+    create: "/issue-receipts",
+    update: (id: string) => `/issue-receipts/${id}`,
+    delete: (id: string) => `/issue-receipts/${id}`,
+  },
 
   // Products
   products: {
@@ -258,6 +265,7 @@ export const endpoints = {
     },
     details: (id: string) => `/customers/${id}`,
     findByPhone: (phone: string) => `/customers/by-phone/${phone}`,
+    findOneByPhone: (phone: string) => `/customers/one-by-phone/${phone}`,
     create: "/customers",
     update: (id: string) => `/customers/${id}`,
     delete: (id: string) => `/customers/${id}`,

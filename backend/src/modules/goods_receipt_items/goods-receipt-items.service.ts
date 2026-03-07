@@ -32,7 +32,6 @@ export class GoodsReceiptItemsService {
   ): Promise<any[]> {
     return this.goodsReceiptItemModel.insertMany(createGoodsReceiptItemDtos);
 
-    //return items.map((item) => this.mapToResponseDto(item));
   }
 
   async findAll(): Promise<GoodsReceiptItemResponseDto[]> {

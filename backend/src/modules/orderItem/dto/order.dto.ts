@@ -1,17 +1,13 @@
 import {
   IsString,
-  IsEmail,
   IsOptional,
   IsArray,
   IsNumber,
   IsEnum,
-  IsMongoId,
   IsUUID,
   ValidateNested,
   Min,
-  ArrayMinSize,
   IsNotEmpty,
-  isEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
@@ -23,96 +19,63 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from '../schemas/order.schema';
-import { CreateOrderItemDto } from '../../item/dto/item.dto';
 import { OrderItemDto } from './orderItem.dto';
 
-export class CreateOrderDto {
-  @IsOptional()
-  @IsUUID()
-  @IsString()
+// Nested DTO for Billing Information
+export class BillingInfoDto {
   @ApiProperty({
-    description: 'Unique identifier for the order',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  _id?: string;
-
-  @ApiProperty({
-    description: 'Type of order',
-    enum: ['website', 'in-store', 'delivery'],
-    example: 'website',
-  })
-  @IsEnum(OrderType)
-  @IsNotEmpty()
-  orderType: OrderType;
-
-  @ApiProperty({
-    description: 'Order export type',
-    enum: ['quick', 'normal'],
-    example: 'normal',
-  })
-  @IsEnum(OrderExport)
-  @IsNotEmpty()
-  orderExport: OrderExport;
-
-  @ApiProperty({
-    description: 'Unique tracking number for the order',
-    example: 'TRK123456789',
-  })
-  @IsString()
-  @IsOptional()
-  trackingNumber: string;
-
-  @ApiProperty({
-    description: "Customer's full name",
-    example: 'John Doe',
-  })
-  @IsString()
-  customerName: string;
-
-  @ApiProperty({
-    description: "Customer's phone number",
-    example: '+1234567890',
-    required: false,
-  })
-  @IsString()
-  customerPhone: string;
-
-  @ApiProperty({
-    description: "Customer's email address",
-    example: 'john.doe@example.com',
-  })
-  @IsOptional()
-  customerEmail: string;
-
-  @ApiProperty({
-    description: 'Array of order items',
-    type: [OrderItemDto],
-  })
-  @IsArray()
-  // @ValidateNested({ each: true })
-  // @Type(() => OrderItemDto)
-  items: OrderItemDto[];
-
-  // status
-  @ApiProperty({
-    description: 'Order status',
-    enum: OrderStatus,
-    example: OrderStatus.PENDING,
-  })
-  @IsOptional()
-  @IsEnum(OrderStatus)
-  status?: OrderStatus;
-
-  @ApiProperty({
-    description: 'Additional notes for the order',
-    example: 'Please handle with care',
+    description: 'Subtotal of the order',
+    example: 100000,
     required: false,
   })
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsNumber()
+  @Min(0)
+  subTotal: number;
 
-  // payment method
+  @ApiProperty({ description: 'Delivery price for the order', example: 20000 })
+  @IsNumber()
+  @Min(0)
+  deliveryPrice: number;
+
+  @ApiProperty({
+    description: 'Discount applied to the order',
+    example: 5000,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discount: number;
+
+  @ApiProperty({
+    description: 'Total amount of the order',
+    example: 115000,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  totalAmount: number;
+
+  @ApiProperty({ description: 'Amount paid by the customer', example: 0 })
+  @IsNumber()
+  @Min(0)
+  customerPay: number;
+
+  @ApiProperty({
+    description: 'Amount to be paid by customer on delivery (COD)',
+    example: 115000,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  customerPayCod: number;
+}
+
+// Nested DTO for Payment Information
+export class PaymentInfoDto {
   @ApiProperty({
     description: 'Payment method for the order',
     enum: PaymentMethod,
@@ -122,22 +85,12 @@ export class CreateOrderDto {
   paymentMethod: PaymentMethod;
 
   @ApiProperty({
-    description: 'Amount paid by the customer',
-    example: 10000,
+    description: 'Payment status for the order',
+    enum: PaymentStatus,
+    example: 'unpaid',
   })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  customerPay: number;
-
-  @ApiProperty({
-    description: 'Amount paid by the customer via COD',
-    example: 5000,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  customerPayCod: number;
+  @IsEnum(PaymentStatus)
+  paymentStatus: PaymentStatus;
 
   @ApiProperty({
     description: 'Payment card number if applicable',
@@ -149,14 +102,6 @@ export class CreateOrderDto {
   paymentCardNumber?: string;
 
   @ApiProperty({
-    description: 'Payment status for the order',
-    enum: ['paid', 'unpaid'],
-    example: 'unpaid',
-  })
-  @IsEnum(PaymentStatus)
-  paymentStatus: PaymentStatus;
-
-  @ApiProperty({
     description: 'Payment code or reference',
     example: 'PAY123456789',
     required: false,
@@ -164,56 +109,166 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   paymentCode?: string;
+}
 
+// Nested DTO for Delivery Information
+export class DeliveryInfoDto {
   @ApiProperty({
     description: 'Delivery method for the order',
-    enum: ['none', 'standard', 'express'],
+    enum: DeliveryMethod,
     example: 'standard',
   })
   @IsEnum(DeliveryMethod)
   deliveryMethod: DeliveryMethod;
 
   @ApiProperty({
-    description: 'Delivery price for the order',
-    example: 5000,
-  })
-  @IsNumber()
-  @Min(0)
-  deliveryPrice: number;
-
-  //taxes
-  @ApiProperty({
-    description: 'Taxes applied to the order',
-    example: 8,
-  })
-  @IsNumber()
-  @Min(0)
-  taxes: number;
-
-  @ApiProperty({
-    description: 'Discount applied to the order',
-    example: 100,
+    description: 'Province for delivery',
+    example: 'Ho Chi Minh City',
     required: false,
   })
-  @IsNumber()
-  @Min(0)
-  discount: number;
-
   @IsOptional()
   @IsString()
   province?: string;
 
+  @ApiProperty({
+    description: 'Ward for delivery',
+    example: 'District 1',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   ward?: string;
 
-  // shipping Address
   @ApiProperty({
-    description: 'Shipping address',
-    example: '123 Main St, City, State 12345',
+    description: 'Full address for delivery',
+    example: '123 Main St',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  address: string;
+  address?: string;
+
+  @ApiProperty({
+    description: 'Phone number of the recipient',
+    example: '+84901234567',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  receiptPhone?: string;
+
+  @ApiProperty({
+    description: 'Note for the delivery person',
+    example: 'Leave at front door',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  receiptNote?: string;
+
+
+  @ApiProperty({
+    description: 'Name of the recipient',
+    example: 'John Doe',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  receiptName?: string;
+
+  @ApiProperty({
+    description: 'Email of the recipient',
+    example: 'johndoe@example.com',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  receiptEmail?: string;
+}
+
+export class CreateOrderDto {
+
+  @ApiProperty({
+    description: 'Tracking number for the order',
+    example: 'TRK123456789',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  trackingNumber?: string;
+
+  @ApiProperty({
+    description: 'Type of order',
+    enum: OrderType,
+    example: 'website',
+  })
+  @IsEnum(OrderType)
+  @IsNotEmpty()
+  orderType: OrderType;
+
+  @ApiProperty({
+    description: 'Order export type',
+    enum: OrderExport,
+    example: 'normal',
+  })
+  @IsEnum(OrderExport)
+  @IsNotEmpty()
+  orderExport: OrderExport;
+
+  @ApiProperty({
+    description: 'Array of order items',
+    type: [OrderItemDto],
+  })
+  @IsArray()
+  //@ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
+  items: OrderItemDto[];
+
+  @ApiProperty({
+    description: 'Additional notes for the order',
+    example: 'Please handle with care',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @ApiProperty({
+    description: 'Order status',
+    enum: OrderStatus,
+    example: OrderStatus.PENDING,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(OrderStatus)
+  status?: OrderStatus;
+
+  // Customer Info
+  @ApiProperty({
+    description: 'Customer ID',
+    example: '60d21b4667d0d8992e610c85',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  customer?: string;
+
+  // Billing, Payment, and Delivery Info
+  @ApiProperty({ type: BillingInfoDto })
+  @ValidateNested()
+  @Type(() => BillingInfoDto)
+  billing: BillingInfoDto;
+
+  @ApiProperty({ type: PaymentInfoDto })
+  @ValidateNested()
+  @Type(() => PaymentInfoDto)
+  payment: PaymentInfoDto;
+
+  @ApiProperty({ type: DeliveryInfoDto, required: false })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DeliveryInfoDto)
+  delivery?: DeliveryInfoDto;
 }
 
 export class UpdateOrderDto extends PartialType(CreateOrderDto) {}

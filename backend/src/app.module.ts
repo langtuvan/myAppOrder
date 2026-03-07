@@ -33,6 +33,8 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { InventoryTransactionsModule } from './modules/inventory_transactions/inventory_transactions.module';
 import { GoodsReceiptsModule } from './modules/goods_receipts/goods-receipts.module';
 import { GoodsReceiptItemsModule } from './modules/goods_receipt_items/goods-receipt-items.module';
+import { IssueReceiptsModule } from './modules/issue_receipts/issue-receipts.module';
+import { IssueReceiptItemsModule } from './modules/issue_receipt_items/issue-receipt-items.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
 
 @Module({
@@ -94,6 +96,8 @@ import { SupplierModule } from './modules/supplier/supplier.module';
     InventoryTransactionsModule,
     GoodsReceiptsModule,
     GoodsReceiptItemsModule,
+    IssueReceiptsModule,
+    IssueReceiptItemsModule,
     SupplierModule,
 
     LoggerModule,

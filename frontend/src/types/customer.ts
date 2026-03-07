@@ -6,33 +6,30 @@ export enum CUSTOMER_GENDER {
 
 export interface Customer {
   _id?: string;
-  id: string;
+  id?: string;
   firstName: string; // required
   lastName?: string;
   phone: string; // required
   status: "active" | "inactive" | "suspended"; // required
+  isActive: boolean;
   gender: "male" | "female" | "other"; // required
   email?: string;
+  notes?: string;
+  // optional
   company?: string;
-  address?: string;
-  city?: string;
+  // address
   province?: string;
   ward?: string;
+  address?: string;
   zipCode?: string;
   country?: string;
-
-  notes?: string;
-  isActive?: boolean;
+  // other fields
   deleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface CreateCustomerDto
-  extends Omit<
-    Customer,
-    "id" | "createdAt" | "updatedAt" | "deleted" | "isActive"
-  > {}
+export interface CreateCustomerDto extends Customer {}
 
 export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {}
 

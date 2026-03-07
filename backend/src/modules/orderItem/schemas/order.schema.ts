@@ -6,6 +6,7 @@ import { uuidv7 } from 'uuidv7';
 export type OrderDocument = Order & Document;
 
 export enum OrderStatus {
+  All = 'all',
   CANCELLED = 'cancelled',
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
@@ -47,6 +48,45 @@ export enum PaymentMethod {
   QR_CODE = 'qrCode',
 }
 
+export enum StatusColor {
+  CANCELLED = 'red',
+  PENDING = 'yellow',
+  CONFIRMED = 'blue',
+  PROCESSING = 'indigo',
+  SHIPPED = 'purple',
+  DELIVERED = 'teal',
+  EXPORTED = 'cyan',
+  COMPLETED = 'green',
+  OVER_DUE = 'orange',
+}
+
+export const paymentMethods = [
+  { id: PaymentMethod.CASH, title: 'Cash' },
+  { id: PaymentMethod.ETRANSFER, title: 'eTransfer' },
+  { id: PaymentMethod.QR_CODE, title: 'QR Code' },
+];
+
+export const deliveryMethods = [
+  {
+    id: DeliveryMethod.NONE,
+    title: 'None Delivery',
+    turnaround: 'customer will pick up',
+    price: 0,
+  },
+  {
+    id: DeliveryMethod.STANDARD,
+    title: 'Standard',
+    turnaround: '3–5 business days',
+    price: 20000,
+  },
+  {
+    id: DeliveryMethod.EXPRESS,
+    title: 'Express',
+    turnaround: '1-2 business days',
+    price: 30000,
+  },
+];
+
 @Schema({ timestamps: true })
 export class OrderItem {
   @Prop({
@@ -79,16 +119,89 @@ export class OrderItem {
 
   @Prop({ type: Date, required: false })
   exportedAt?: Date;
+
+  @Prop({ type: Date, required: false })
+  date?: Date;
+}
+
+// Nested schema for billing information
+@Schema({ _id: false })
+export class BillingInfo {
+  @Prop({ type: Number, default: 0 })
+  subTotal: number;
+
+  @Prop({ type: Number, default: 0 })
+  deliveryPrice: number;
+
+  @Prop({ type: Number, default: 0 })
+  discount: number;
+
+  @Prop({ type: Number, default: 0 })
+  totalAmount: number;
+
+  @Prop({ type: Number, default: 0 })
+  customerPay: number;
+
+  @Prop({ type: Number, default: 0 })
+  customerPayCod: number;
+}
+
+// Nested schema for payment information
+@Schema({ _id: false })
+export class PaymentInfo {
+  @Prop({ type: String, enum: PaymentMethod, default: PaymentMethod.CASH })
+  paymentMethod: string;
+
+  @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.UNPAID })
+  paymentStatus: string;
+
+  @Prop({ type: String, required: false, default: '' })
+  paymentCardNumber?: string;
+
+  @Prop({ type: String, default: '' })
+  paymentCode?: string;
+}
+
+// Nested schema for delivery information
+@Schema({ _id: false })
+export class DeliveryInfo {
+  @Prop({ type: String, enum: DeliveryMethod, default: DeliveryMethod.NONE })
+  deliveryMethod?: DeliveryMethod;
+
+  @Prop({ type: String })
+  province?: string;
+
+  @Prop({ type: String })
+  ward?: string;
+
+  @Prop({ type: String })
+  address?: string;
+
+  @Prop({ type: String })
+  receiptPhone?: string;
+
+  @Prop({ type: String })
+  receiptNote?: string;
+
+  //
+  @Prop({ type: String })
+  receiptName?: string;
+  
+  @Prop({ type: String })
+  receiptEmail?: string;
 }
 
 @Schema({ timestamps: true })
 export class Order {
   @Prop({
-    type: String,
+    type: MongooseSchema.Types.Mixed,
     auto: true,
     default: uuidv7,
   })
   _id: string;
+
+  @Prop({ type: String, required: false })
+  trackingNumber?: string;
 
   @Prop({ type: String, enum: OrderType, default: OrderType.WEBSITE })
   orderType: OrderType;
@@ -96,81 +209,34 @@ export class Order {
   @Prop({ type: String, enum: OrderExport, default: OrderExport.NORMAL })
   orderExport: OrderExport;
 
-  @Prop({ type: String })
-  trackingNumber: string;
-  // customer info
-  @Prop({ type: String })
-  customerName: string;
-
-  @Prop({ type: String })
-  customerPhone: string;
-
-  @Prop({ type: String, default: '' })
-  customerEmail: string;
-  // items
+  // Items
   @Prop([OrderItem])
   items: OrderItem[];
-  // status
+
+  @Prop({ type: String, default: '' })
+  notes?: string;
+
+  // Order status
   @Prop({ type: String, enum: OrderStatus, default: OrderStatus.PENDING })
   status: string;
 
-  @Prop({ type: String })
-  notes: string;
-  //cart
-  // payment method
-  @Prop({ type: String, enum: PaymentMethod, default: PaymentMethod.CASH })
-  paymentMethod: string;
+  // Customer info
+  @Prop({ type: MongooseSchema.Types.Mixed, ref: 'Customer', required: false })
+  customer?: string;
 
-  @Prop({ type: Number, default: 0 })
-  customerPay: number;
+  // Billing information (nested)
+  @Prop({ type: Object, default: () => ({}) })
+  billing: BillingInfo;
 
-  @Prop({ type: Number, default: 0 })
-  customerPayCod: number;
+  // Payment information (nested)
+  @Prop({ type: Object, default: () => ({}) })
+  payment: PaymentInfo;
 
-  @Prop({ type: String, required: false, default: '' })
-  paymentCardNumber: string;
+  // Delivery information (nested)
+  @Prop({ type: Object, required: false })
+  delivery?: DeliveryInfo;
 
-  @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.UNPAID })
-  paymentStatus: string;
-
-  @Prop({ type: String, default: '' })
-  paymentCode: string;
-  // // delivery method
-  @Prop({ type: String, enum: DeliveryMethod, default: DeliveryMethod.NONE })
-  deliveryMethod: string;
-
-  @Prop({ type: Number, default: 0 })
-  deliveryPrice: number;
-
-  @Prop({ type: Number, default: 0 })
-  // // shipping Address
-  @Prop({ type: String })
-  province: string;
-
-  @Prop({ type: String })
-  ward: string;
-
-  @Prop({ type: String })
-  address: string;
-
-  //subtotal
-  @Prop({ type: Number, default: 0 })
-  subTotal: number;
-
-  @Prop({ type: Number, default: 0 })
-  shippingFee: number;
-
-  @Prop({ type: Number, default: 0 })
-  discount: number;
-  //taxes
-  @Prop({ type: Number, default: 0 })
-  taxes: number;
-
-  // total amount
-  @Prop({ type: Number, default: 0 })
-  totalAmount: number;
-
-  // author
+  // User references
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   createdBy?: string;
 
@@ -195,3 +261,6 @@ export class Order {
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
+export const BillingInfoSchema = SchemaFactory.createForClass(BillingInfo);
+export const PaymentInfoSchema = SchemaFactory.createForClass(PaymentInfo);
+export const DeliveryInfoSchema = SchemaFactory.createForClass(DeliveryInfo);

@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 import { createIDBStorage } from "./idbStorage";
 import { ECOMMERCE_VARIABLES } from "@/config-global";
-import { deliveryMethods, OrderStatus } from "@/hooks/useOrders";
+import { deliveryMethods, OrderStatus } from "@/types/order";
 
 export type CartItem = {
   _id?: string; //uuidv7();
@@ -63,7 +63,7 @@ export const useCartStore = create<CartState>()(
 
         // Use product ID as the unique identifier since _id might be undefined
         const existingIndex = items.findIndex(
-          (i) => i.product === item.product
+          (i) => i.product === item.product,
         );
 
         if (existingIndex >= 0) {
@@ -95,7 +95,7 @@ export const useCartStore = create<CartState>()(
         const newQuantity = Math.max(1, quantity);
         set({
           items: get().items.map((i) =>
-            i._id === _id ? { ...i, quantity: newQuantity } : i
+            i._id === _id ? { ...i, quantity: newQuantity } : i,
           ),
         });
         get().calculateTotal();
@@ -171,6 +171,6 @@ export const useCartStore = create<CartState>()(
         // mark hydrated after rehydrate completes
         state?.hasHydrated !== undefined && (state.hasHydrated = true);
       },
-    }
-  )
+    },
+  ),
 );

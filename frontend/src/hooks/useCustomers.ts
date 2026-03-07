@@ -29,7 +29,7 @@ export function useCustomersTable(params: CustomersQueryParams = {}) {
     queryKey: customerKeys.list(params),
     queryFn: async (): Promise<CustomersListResponse> => {
       const response = await axiosInstance.get(
-        endpoints.customers.list(params)
+        endpoints.customers.list(params),
       );
       return response.data;
     },
@@ -41,7 +41,7 @@ export function useCustomers(params: CustomersQueryParams = {}) {
     queryKey: customerKeys.list(params),
     queryFn: async (): Promise<CustomersListResponse> => {
       const response = await axiosInstance.get(
-        endpoints.customers.list(params)
+        endpoints.customers.list(params),
       );
       return response.data;
     },
@@ -82,7 +82,7 @@ export function useCreateCustomer() {
     mutationFn: async (data: CreateCustomerDto): Promise<Customer> => {
       const response = await axiosInstance.post(
         endpoints.customers.create,
-        data
+        data,
       );
       return response.data;
     },
@@ -90,16 +90,13 @@ export function useCreateCustomer() {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.stats() });
       success(
-        'Customer Created',
-        'The customer has been created successfully.'
+        "Customer Created",
+        "The customer has been created successfully.",
       );
     },
     onError: (err: any) => {
       if (Array.isArray(err?.message)) return;
-      error(
-        'Error',
-        err?.message || 'An error occurred.'
-      );
+      error("Error", err?.message || "An error occurred.");
     },
   });
 }
@@ -122,7 +119,7 @@ export function useUpdateCustomer() {
     }): Promise<Customer> => {
       const response = await axiosInstance.patch(
         endpoints.customers.update(id),
-        data
+        data,
       );
       return response.data;
     },
@@ -130,20 +127,17 @@ export function useUpdateCustomer() {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.setQueryData(
         customerKeys.detail(updatedCustomer._id as string),
-        updatedCustomer
+        updatedCustomer,
       );
       queryClient.invalidateQueries({ queryKey: customerKeys.stats() });
       success(
-        'Customer Updated',
-        'The customer has been updated successfully.'
+        "Customer Updated",
+        "The customer has been updated successfully.",
       );
     },
     onError: (err: any) => {
       if (Array.isArray(err?.message)) return;
-      error(
-        'Error',
-        err?.message || 'An error occurred.'
-      );
+      error("Error", err?.message || "An error occurred.");
     },
   });
 }
@@ -161,14 +155,14 @@ export function useDeleteCustomer() {
     mutationFn: async (id: string): Promise<void> => {
       // Confirm deletion
       const confirmed = await confirm(
-        'Confirm Deletion',
-        'Are you sure you want to delete this customer?'
+        "Confirm Deletion",
+        "Are you sure you want to delete this customer?",
       );
       if (confirmed === "confirm") {
         await axiosInstance.delete(endpoints.customers.delete(id));
         success(
-          'Customer Deleted',
-          'The customer has been deleted successfully.'
+          "Customer Deleted",
+          "The customer has been deleted successfully.",
         );
       }
     },
@@ -178,10 +172,7 @@ export function useDeleteCustomer() {
     },
     onError: (err: any) => {
       if (Array.isArray(err?.message)) return;
-      error(
-        'Error',
-        err?.message || 'An error occurred.'
-      );
+      error("Error", err?.message || "An error occurred.");
     },
   });
 }
@@ -202,16 +193,13 @@ export function useRestoreCustomer() {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.stats() });
       success(
-        'Customer Restored',
-        'The customer has been restored successfully.'
+        "Customer Restored",
+        "The customer has been restored successfully.",
       );
     },
     onError: (err: any) => {
       if (Array.isArray(err?.message)) return;
-      error(
-        'Error',
-        err?.message || 'An error occurred.'
-      );
+      error("Error", err?.message || "An error occurred.");
     },
   });
 }
@@ -220,14 +208,29 @@ export function useRestoreCustomer() {
 const normalizePhone = (val?: string) => (val ?? "").replace(/\D/g, "");
 
 // Lazy query: find a customer by phone on demand
-export function useLazyCustomerByPhone() {
+export function useLazyCustomersByPhone() {
   return useMutation({
     mutationFn: async (phone: string): Promise<Customer[]> => {
       const query = (phone ?? "").trim();
       if (!query) return [];
 
       const res = await axiosInstance.get(
-        endpoints.customers.findByPhone(query)
+        endpoints.customers.findByPhone(query),
+      );
+
+      return res.data;
+    },
+  });
+}
+
+// Lazy query: find a single customer by phone on demand
+export function useLazyCustomerByPhone() {
+  return useMutation({
+    mutationFn: async (phone: string): Promise<Customer> => {
+      const query = (phone ?? "").trim();
+      if (!query) throw new Error("Phone number is required");
+      const res = await axiosInstance.get(
+        endpoints.customers.findOneByPhone(query),
       );
 
       return res.data;

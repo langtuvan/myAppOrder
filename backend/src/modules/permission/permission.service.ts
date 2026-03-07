@@ -20,7 +20,7 @@ export class PermissionService {
   async findAll(query: any = {}): Promise<PermissionDocument[]> {
     return this.permissionModel
       .find({ ...query, deleted: false })
-      .populate('module')
+      //.populate('module')
       .exec();
   }
 

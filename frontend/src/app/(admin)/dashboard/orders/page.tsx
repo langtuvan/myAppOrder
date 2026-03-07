@@ -1,16 +1,14 @@
 "use client";
 import { Button } from "@/components/button";
 import { Heading } from "@/components/heading";
-import {
-  OrderStatus,
-  useOrderList,
-} from "@/hooks/useOrders";
+import { useOrderList } from "@/hooks/useOrders";
 import paths from "@/router/path";
 import OrderList from "@/sections/list/order-list";
 import { Input } from "@/components/input";
 import { Radio } from "@/components/radio";
 import * as Headless from "@headlessui/react";
 import { Select } from "@/components/select";
+import { OrderStatus } from "@/types/order";
 
 const statusOptions = [...Object.values(OrderStatus)];
 export default function ProductPage() {

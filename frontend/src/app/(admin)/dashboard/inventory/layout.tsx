@@ -55,6 +55,12 @@ const navigation: NavigationItem[] = [
         icon: UserIcon,
         action: "goods-receipts:read",
       },
+      {
+        name: "Xuất kho ",
+        href: paths.dashboard.inventory.issueReceipts.list,
+        icon: UserIcon,
+        action: "issue-receipts:read",
+      },
       // { name: "Chuyển kho", href: "#2", icon: BuildingOfficeIcon, current: false },
       // { name: "Thanh Toán", href: "#4", icon: CreditCardIcon, current: false },
     ],

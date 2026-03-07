@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import {
   createColumnHelper,
@@ -28,14 +27,15 @@ import {
 import paths from "@/router/path";
 import { Badge } from "@/components/badge";
 import { Product } from "@/types/product";
-import { type Order, StatusColor } from "@/hooks/useOrders";
+
 import { fDate, fDateTime, formatStr } from "@/utils/format-time";
 import { fCurrencyVND } from "@/utils/format-number";
 import { Strong, Text } from "@/components/text";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/input";
+import { type Order, deliveryMethods, StatusColor } from "@/types/order";
 
-type VisibilityState = Partial<Record<keyof Order, boolean>>;
+type VisibilityState = Partial<Record<string, boolean>>;
 
 const defaultVisibilityState: VisibilityState = {
   _id: true,
@@ -45,18 +45,17 @@ const defaultVisibilityState: VisibilityState = {
   deliveryMethod: false,
   paymentMethod: false,
   paymentStatus: false,
-  customerName: false,
-  customerEmail: false,
-  customerPhone: false,
-  totalAmount: false,
   status: true,
   createdAt: true,
 };
 
-const mergeVisibilityState = (state?: VisibilityState): VisibilityState => ({
-  ...defaultVisibilityState,
-  ...(state ?? {}),
-});
+const mergeVisibilityState = (
+  state?: Partial<Record<string, boolean>>,
+): Record<string, boolean> =>
+  ({
+    ...defaultVisibilityState,
+    ...(state ?? {}),
+  }) as Record<string, boolean>;
 
 const columnHelper = createColumnHelper<Order>();
 
@@ -72,9 +71,9 @@ export default function OrderList({
   isLoading?: boolean;
 }) {
   // table state
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    mergeVisibilityState(visibilityState)
-  );
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(mergeVisibilityState(visibilityState));
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
@@ -92,7 +91,9 @@ export default function OrderList({
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
-        cell: (info) => <span className=" sm:inline">{info.row.index + 1}</span>,
+        cell: (info) => (
+          <span className=" sm:inline">{info.row.index + 1}</span>
+        ),
         size: 50,
       }),
       columnHelper.accessor("orderType", {
@@ -120,7 +121,7 @@ export default function OrderList({
         size: 150,
       }),
 
-      columnHelper.accessor("deliveryMethod", {
+      columnHelper.accessor("delivery", {
         header: ({ column }) => (
           <button
             className="flex items-center gap-2 hover:text-primary"
@@ -130,9 +131,14 @@ export default function OrderList({
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
+        cell: (info) => (
+          <span className="">
+            {info.row.original.delivery?.deliveryMethod || "N/A"}
+          </span>
+        ),
         size: 120,
       }),
-      columnHelper.accessor("paymentMethod", {
+      columnHelper.accessor("payment", {
         header: ({ column }) => (
           <button
             className="flex items-center gap-2 hover:text-primary"
@@ -144,19 +150,21 @@ export default function OrderList({
         ),
         cell: (info) => (
           <span className="">
-            {info.getValue()} -
+            {info.row.original.payment?.paymentMethod} -
             <Badge
               color={
-                info.row.original.paymentStatus === "paid" ? "green" : "orange"
+                info.row.original.payment?.paymentStatus === "paid"
+                  ? "green"
+                  : "orange"
               }
             >
-              {info.row.original.paymentStatus}
+              {info.row.original.payment?.paymentStatus}
             </Badge>
           </span>
         ),
         size: 180,
       }),
-      columnHelper.accessor((row) => row.customerPhone || row.customerEmail, {
+      columnHelper.accessor("customer", {
         id: "customer",
         header: ({ column }) => (
           <button
@@ -169,15 +177,17 @@ export default function OrderList({
         ),
         cell: (info) => (
           <span>
-            {info.row.original?.customerPhone ||
-              info.row.original?.customerEmail +
-                " - " +
-                info.row.original?.customerName}
+            {typeof info.row.original.customer === "string"
+              ? info.row.original.customer
+              : info.row.original.customer?.phone ||
+                info.row.original.customer?.firstName ||
+                info.row.original.customer?.email ||
+                "N/A"}
           </span>
         ),
         size: 200,
       }),
-      columnHelper.accessor("totalAmount", {
+      columnHelper.accessor("billing", {
         header: ({ column }) => (
           <button
             className=" sm:flex items-center gap-2 hover:text-primary"
@@ -188,12 +198,15 @@ export default function OrderList({
           </button>
         ),
         cell: (info) => (
-          <span className=" sm:inline">{fCurrencyVND(info.getValue()!)}</span>
+          <span className=" sm:inline">
+            {fCurrencyVND(info.row.original.billing?.totalAmount || 0)}
+          </span>
         ),
         size: 150,
       }),
       // customerPayCod
-      columnHelper.accessor("customerPayCod", {
+      columnHelper.accessor((row) => row.billing?.customerPayCod || 0, {
+        id: "customerPayCod",
         header: ({ column }) => (
           <button
             className=" sm:flex items-center gap-2 hover:text-primary"
@@ -204,7 +217,7 @@ export default function OrderList({
           </button>
         ),
         cell: (info) => (
-          <span className=" sm:inline">{fCurrencyVND(info.getValue()!)}</span>
+          <span className=" sm:inline">{fCurrencyVND(info.getValue())}</span>
         ),
         size: 150,
       }),
@@ -251,7 +264,7 @@ export default function OrderList({
         size: 130,
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -313,20 +326,23 @@ export default function OrderList({
                 Quantity: <Strong>{row.original.items?.length} </Strong>
               </Text>
               <Text>
-                Delivery: <Strong>{row.original.deliveryMethod} </Strong>
+                Delivery:{" "}
+                <Strong>
+                  {row.original.delivery?.deliveryMethod || "N/A"}{" "}
+                </Strong>
               </Text>
               <Text>
                 Payment:{" "}
                 <Strong>
-                  {row.original.paymentMethod} -{" "}
+                  {row.original.payment?.paymentMethod} -{" "}
                   <Badge
                     color={
-                      row.original.paymentStatus === "paid"
+                      row.original.payment?.paymentStatus === "paid"
                         ? "green"
                         : "orange"
                     }
                   >
-                    {row.original.paymentStatus}
+                    {row.original.payment?.paymentStatus}
                   </Badge>
                 </Strong>
               </Text>
@@ -334,15 +350,20 @@ export default function OrderList({
                 Customer:{" "}
                 <Strong>
                   {" "}
-                  {row.original.customerPhone ||
-                    row.original.customerName ||
-                    row.original.customerEmail ||
-                    ""}{" "}
+                  {typeof row.original.customer === "string"
+                    ? row.original.customer
+                    : row.original.customer?.phone ||
+                      row.original.customer?.firstName ||
+                      row.original.customer?.email ||
+                      "N/A"}{" "}
                 </Strong>
               </Text>
               <Text className="flex flex-row justify-between">
                 <span>
-                  Total: <Strong>{fCurrencyVND(row.original.totalAmount!)} </Strong>
+                  Total:{" "}
+                  <Strong>
+                    {fCurrencyVND(row.original.billing?.totalAmount || 0)}{" "}
+                  </Strong>
                 </span>
                 <Badge
                   color={
@@ -396,10 +417,10 @@ export default function OrderList({
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
-                                header.getContext()
+                                header.getContext(),
                               )}
                         </div>
-                      {header.column.getCanResize() && (
+                        {header.column.getCanResize() && (
                           <div
                             role="presentation"
                             onMouseDown={header.getResizeHandler()}
@@ -438,7 +459,7 @@ export default function OrderList({
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     );

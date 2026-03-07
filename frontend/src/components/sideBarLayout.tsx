@@ -31,7 +31,7 @@ export function SideBarLayout({
   const pathName = usePathname();
   const [, , , currentLink] = pathName.split("/");
   return (
-    <div className="grid grid-cols-1 md:grid-cols-6 gap-y-6 gap-x-2 px-0 md:px-1">
+    <div className="grid grid-cols-1 md:grid-cols-6 gap-y-6 md:gap-x-2 px-0 md:px-1">
       <div className="col-span-1 ">
         <Sidebar className="h-fit border-0 rounded-xl bg-zinc-100 dark:bg-zinc-800">
           <SidebarBody>
@@ -60,7 +60,7 @@ export function SideBarLayout({
         </Sidebar>
       </div>
 
-      <div className="col-span-5">{children}</div>
+      <div className="col-span-5 overflow-auto">{children}</div>
       {modal}
       <div id="modal-root" />
     </div>

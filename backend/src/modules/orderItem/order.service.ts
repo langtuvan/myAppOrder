@@ -18,6 +18,20 @@ import {
 import { Product, ProductDocument } from '../product/schemas/product.schema';
 import { CreateOrderDto, UpdateOrderDto } from './dto/order.dto';
 import { OrderGateway } from './order.gateway';
+import {
+  Inventory,
+  InventoryDocument,
+} from '../inventory/schemas/inventory.schema';
+import {
+  IssueReceiptItem,
+  IssueReceiptItemDocument,
+} from '../issue_receipt_items';
+import {
+  IssueReceipt,
+  IssueReceiptDocument,
+  IssueReceiptsService,
+  IssueReceiptStatus,
+} from '../issue_receipts';
 
 @Injectable()
 export class OrderService {
@@ -26,82 +40,154 @@ export class OrderService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Inventory.name)
+    private inventoryModel: Model<InventoryDocument>,
     private orderGateway: OrderGateway,
+    private issueReceiptService: IssueReceiptsService,
   ) {}
+
+  /**
+   * Generate tracking number with format: TYPE + YYYYMMDD + auto-incrementing sequence
+   * Example: INSTORE20260306001, DELIVER20260306002, WEB20260306001
+   */
+  private async generateTrackingNumber(orderType: OrderType): Promise<string> {
+    // Get type prefix
+    const typeMap = {
+      [OrderType.IN_STORE]: 'INSTORE',
+      [OrderType.DELIVERY]: 'DELIVER',
+      [OrderType.WEBSITE]: 'WEB',
+    };
+    const typePrefix = typeMap[orderType];
+
+    // Get today's date in YYYYMMDD format
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateStr = `${year}${month}${day}`;
+
+    // Find the latest tracking number for this type and date
+    const regex = new RegExp(`^${typePrefix}-${dateStr}(\\d+)$`);
+    const lastOrder = await this.orderModel
+      .findOne({ trackingNumber: regex })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    // Extract sequence number and increment
+    let sequence = 1;
+    if (lastOrder?.trackingNumber) {
+      const match = lastOrder.trackingNumber.match(regex);
+      if (match) {
+        sequence = parseInt(match[1], 10) + 1;
+      }
+    }
+
+    // Pad sequence to 3 digits
+    const sequenceStr = String(sequence).padStart(3, '0');
+    return `${typePrefix}-${dateStr}${sequenceStr}`;
+  }
+
+  /**
+   * Deduct stock from inventory based on requested quantity
+   * Distributes the deduction across available inventories
+   */
+  async deductInventoryStock(
+    productId: string,
+    quantity: number,
+    orderId: string,
+    inventories: Inventory[],
+  ): Promise<void> {
+    let remainingQuantity = quantity;
+    const inventoriesByQuantity = inventories.sort((a, b) => {
+      const aAvail = a.quantity - a.reservedQuantity;
+      const bAvail = b.quantity - b.reservedQuantity;
+      return bAvail - aAvail;
+    });
+
+    for (const inventory of inventoriesByQuantity) {
+      if (remainingQuantity <= 0) break;
+
+      const availableQuantity = inventory.quantity - inventory.reservedQuantity;
+      const quantityToDeduct = Math.min(remainingQuantity, availableQuantity);
+
+      if (quantityToDeduct > 0) {
+        const beforeQuantity = inventory.quantity;
+        try {
+          // Update inventory quantity
+          // await this.inventoryService.removeStock(
+          //   inventory._id,
+          //   quantityToDeduct,
+          // );
+
+          // Create transaction record
+          // await this.createInventoryTransaction(
+          //   inventory._id,
+          //   productId,
+          //   quantityToDeduct,
+          //   beforeQuantity,
+          //   orderId,
+          //   `Stock deducted for order ${orderId}`,
+          // );
+
+          remainingQuantity -= quantityToDeduct;
+          this.logger.debug(
+            `Deducted ${quantityToDeduct} units from inventory ${inventory._id}`,
+          );
+        } catch (error: any) {
+          this.logger.error(
+            `Failed to deduct stock from inventory ${inventory._id}: ${error.message}`,
+          );
+          throw new BadRequestException(
+            `Failed to process inventory deduction: ${error.message}`,
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Restore inventory stock when order is cancelled
+   * Restores stock to the same inventories it was deducted from based on transactions
+   */
 
   /**
    * Calculate subtotal and total amount for an order
    * Subtotal = sum of (quantity * price) for all items
-   * Total = subtotal + shippingFee + taxes - discount
+   * Total = subtotal + deliveryPrice - discount
    */
-  calculateOrderTotals(order: Partial<Order>): {
-    subTotal: number;
-    totalAmount: number;
-  } {
-    const subTotal =
-      order.items?.reduce((sum, item) => {
-        return sum + item.quantity * item.price;
-      }, 0) || 0;
-
-    const taxes = 0.08 * subTotal;
-
-    const totalAmount =
-      subTotal +
-      (order?.deliveryPrice || 0) +
-      (taxes || 0) -
-      (order?.discount || 0);
-
-    return { subTotal, totalAmount };
-  }
-
-  async CheckProductAvailability(order: Partial<Order>): Promise<void> {
-    for (const item of order.items) {
-      const product = await this.productModel.findById(item.product).exec();
-      if (!product) {
-        this.logger.warn(`Product with ID ${item.product} not found`);
-        throw new NotFoundException(
-          `Product with ID ${item.product} not found`,
-        );
-      }
-      if (!product.isAvailable) {
-        this.logger.warn(`Product ${product.name} is not available`);
-        throw new BadRequestException(
-          `Product ${product.name} is not available`,
-        );
-      }
-      if (product.stock < item.quantity) {
-        this.logger.warn(
-          `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
-        );
-        throw new BadRequestException(
-          `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
-        );
-      }
-    }
-    // if status is confirm Update product stock
-    for (const item of order.items) {
-      try {
-        await this.productModel.findByIdAndUpdate(item.product, {
-          $inc: { stock: -item.quantity },
-        });
-      } catch (error) {
-        throw new BadRequestException(
-          `Insufficient stock for product . Available: , Requested: ${item.quantity}`,
-        );
-      }
-    }
-  }
 
   async create(
     input: Partial<CreateOrderDto>,
     createdBy?: string,
   ): Promise<Order> {
     const createOrderDto = input as Order;
-    const { subTotal, totalAmount } = await this.calculateOrderTotals(
-      createOrderDto as any,
-    );
+    createOrderDto.customer = createOrderDto?.customer || null;
+
+    // Initialize nested objects if not present
+    if (!createOrderDto.billing) {
+      createOrderDto.billing = {
+        subTotal: 0,
+        deliveryPrice: 0,
+        discount: 0,
+        totalAmount: 0,
+        customerPay: 0,
+        customerPayCod: 0,
+      };
+    }
+    if (!createOrderDto.payment) {
+      createOrderDto.payment = {
+        paymentMethod: PaymentMethod.CASH,
+        paymentStatus: PaymentStatus.UNPAID,
+        paymentCardNumber: '',
+        paymentCode: '',
+      };
+    }
+
     if (createOrderDto.orderType === OrderType.IN_STORE) {
-      createOrderDto.trackingNumber = `order-${Date.now()}`;
+      createOrderDto.trackingNumber = await this.generateTrackingNumber(
+        OrderType.IN_STORE,
+      );
+      createOrderDto.payment.paymentStatus = PaymentStatus.PAID;
       if (createOrderDto.orderExport === OrderExport.QUICK) {
         // checker, cashier, exporter all same as createdBy
         createOrderDto.checker = createdBy;
@@ -109,7 +195,6 @@ export class OrderService {
         createOrderDto.exporter = createdBy;
         // status completed and paymentStatus paid
         createOrderDto.status = OrderStatus.COMPLETED;
-        createOrderDto.paymentStatus = PaymentStatus.PAID;
         // items status completed, exporter and exportedAt
         createOrderDto.items = createOrderDto.items.map((item) => ({
           ...item,
@@ -124,23 +209,34 @@ export class OrderService {
         createOrderDto.cashier = createdBy;
         // status confirmed and paymentStatus paid
         createOrderDto.status = OrderStatus.CONFIRMED;
-        createOrderDto.paymentStatus = PaymentStatus.PAID;
         // items status confirmed
         createOrderDto.items = createOrderDto.items.map((item) => ({
           ...item,
           status: OrderStatus.CONFIRMED,
         }));
       }
-      // if (createOrderDto.orderExport === OrderExport.RECEPT) {
-      //   // status pending and paymentStatus unpaid
-      //   createOrderDto.status = OrderStatus.PENDING;
-      //   createOrderDto.paymentStatus = PaymentStatus.UNPAID;
-      // }
     }
 
     if (createOrderDto.orderType === OrderType.DELIVERY) {
-      createOrderDto.trackingNumber = `delivery-${Date.now()}`;
-      createOrderDto.status = OrderStatus.CONFIRMED;
+      // check billing if totalAmount = customerPay  set status paid and completed,
+      if (
+        createOrderDto.billing.totalAmount -
+          createOrderDto.billing.customerPay <=
+        0
+      ) {
+        createOrderDto.payment.paymentStatus = PaymentStatus.PAID;
+        createOrderDto.status = OrderExport.QUICK
+          ? OrderStatus.COMPLETED
+          : OrderStatus.CONFIRMED;
+      } else if (createOrderDto.billing.customerPayCod > 0) {
+        createOrderDto.payment.paymentStatus = PaymentStatus.UNPAID;
+        createOrderDto.status = OrderStatus.CONFIRMED;
+      }
+
+      createOrderDto.trackingNumber = await this.generateTrackingNumber(
+        OrderType.DELIVERY,
+      );
+      createOrderDto.status = status;
       createOrderDto.items = createOrderDto.items.map((item) => ({
         ...item,
         exporter:
@@ -160,85 +256,100 @@ export class OrderService {
 
     if (createOrderDto.orderType === OrderType.WEBSITE) {
       // default payment method cash, paymentStatus unpaid, status pending
-      createOrderDto.trackingNumber = `website-${Date.now()}`;
+      createOrderDto.trackingNumber = await this.generateTrackingNumber(
+        OrderType.WEBSITE,
+      );
       createOrderDto.status = OrderStatus.PENDING;
-      createOrderDto.paymentMethod = PaymentMethod.CASH;
-      createOrderDto.paymentStatus = PaymentStatus.UNPAID;
-      createOrderDto.orderExport = OrderExport.NORMAL;
-      createOrderDto.customerPay = 0;
-      createOrderDto.customerPayCod =
-        totalAmount - (createOrderDto?.customerPay || 0);
+      // createOrderDto.payment.paymentMethod = PaymentMethod.CASH;
+      // createOrderDto.payment.paymentStatus = PaymentStatus.UNPAID;
+      // createOrderDto.orderExport = OrderExport.NORMAL;
+      // createOrderDto.billing.customerPay = 0;
+      // createOrderDto.billing.customerPayCod =
+      //   createOrderDto.billing.totalAmount -
+      //   (createOrderDto?.billing?.customerPay || 0);
     }
 
     try {
-      // Validate that all products exist and are available
+      // Validate that all products exist and are available by inventory
+      const itemInventories: { [key: string]: any[] } = {};
+
+      let items = [];
       for (const item of createOrderDto.items) {
-        const product = await this.productModel.findById(item.product).exec();
+        // find product to get price
+        const findProduct = await this.productModel
+          .findById(item.product)
+          .exec();
+
+        const product = await this.inventoryModel
+          .findOne({ product: item.product })
+          .exec();
         if (!product) {
           this.logger.warn(`Product with ID ${item.product} not found`);
           throw new NotFoundException(
             `Product with ID ${item.product} not found`,
           );
         }
-        if (!product.isAvailable) {
-          this.logger.warn(`Product ${product.name} is not available`);
+        if (!product.quantity || product.quantity <= 0) {
+          this.logger.warn(`Product with ID ${item.product} is not available`);
           throw new BadRequestException(
-            `Product ${product.name} is not available`,
+            `Product with ID ${item.product} is not available`,
           );
         }
-        if (product.stock < item.quantity) {
-          this.logger.warn(
-            `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
-          );
-          throw new BadRequestException(
-            `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
-          );
-        }
+
+        // Validate inventory availability and get inventories
+        // const inventories = await this.validateProductAvailabilityByInventory(
+        //   product,
+        //   item.quantity,
+        // );
+        // itemInventories[item.product] = inventories;
       }
 
-      if (createOrderDto.orderType === OrderType.DELIVERY) {
-        const status = OrderExport.QUICK
-          ? OrderStatus.COMPLETED
-          : OrderStatus.CONFIRMED;
-        const cod = totalAmount - (createOrderDto?.customerPay || 0);
-        createOrderDto.trackingNumber = `delivery-${Date.now()}`;
-        createOrderDto.status = status;
-        createOrderDto.customerPayCod = cod;
-        createOrderDto.paymentStatus =
-          cod === 0 ? PaymentStatus.PAID : PaymentStatus.UNPAID;
-        // checker, cashier, exporter all same as createdBy
-        createOrderDto.checker = createdBy;
-        createOrderDto.cashier = createdBy;
-        createOrderDto.exporter = createdBy;
-        // items status completed, exporter and exportedAt
-        createOrderDto.items = createOrderDto.items.map((item) => ({
-          ...item,
-          status,
-          exporter: status === OrderStatus.COMPLETED ? createdBy : undefined,
-          exportedAt: status === OrderStatus.COMPLETED ? new Date() : undefined,
-        }));
-      }
+      console.log('222');
+
+      // create issue
+      const newIssueReceipt = await this.issueReceiptService.create(
+        {
+          customer: createOrderDto?.customer,
+          note: createOrderDto.notes,
+          items: createOrderDto.items.map((item) => ({
+            product: item.product,
+            quantity: item.quantity,
+            warehouse: '',
+            price: item.price,
+          })),
+        },
+        createdBy,
+      );
+
+      console.log('333');
 
       const order = new this.orderModel({
         ...createOrderDto,
-        subTotal,
-        totalAmount,
       });
       const savedOrder = await order.save();
 
-      if (
-        //order.orderType === OrderType.IN_STORE &&
-        order.orderExport === OrderExport.QUICK
-      ) {
-        // Update product stock
+      console.log('444');
+
+      // Deduct inventory stock and create transaction records
+      if (createOrderDto.orderExport === OrderExport.QUICK) {
         for (const item of createOrderDto.items) {
-          await this.productModel.findByIdAndUpdate(item.product, {
-            $inc: { stock: -item.quantity },
-          });
+          const inventories = itemInventories[item.product];
+          if (inventories) {
+            await this.deductInventoryStock(
+              item.product,
+              item.quantity,
+              savedOrder._id.toString(),
+              inventories,
+            );
+          }
         }
       }
 
+      console.log('555');
+
       const createdOrder = await this.findOne(savedOrder._id);
+
+      console.log('666');
 
       // Emit real-time event for order creation
       this.orderGateway.emitOrderCreated(createdOrder);
@@ -248,10 +359,6 @@ export class OrderService {
 
       return createdOrder;
     } catch (error) {
-      this.logger.error(
-        `Failed to create order: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -287,10 +394,6 @@ export class OrderService {
       this.logger.debug(`Retrieved ${orders.length} orders`);
       return orders;
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch all orders: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -313,10 +416,6 @@ export class OrderService {
       );
       return orders;
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch orders by status: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -344,7 +443,7 @@ export class OrderService {
     try {
       const order = await this.orderModel
         .findById(id)
-
+        .populate(['customer'])
         .lean()
         .exec();
 
@@ -354,61 +453,57 @@ export class OrderService {
       }
       return order;
     } catch (error) {
-      this.logger.error(`Failed to fetch order: ${error.message}`, error.stack);
       throw error;
     }
   }
 
-  async update(id: string, data: any, userId?: string): Promise<Order> {
-    const updateOrderDto: any = data;
-    this.logger.log(`Updating order with ID: ${id}`);
-    try {
-      // If updating items, validate products again
-      if (updateOrderDto.items) {
-        for (const item of updateOrderDto.items) {
-          const product = await this.productModel.findById(item.product).exec();
-          if (!product) {
-            this.logger.warn(
-              `Product with ID ${item.product} not found during update`,
-            );
-            throw new NotFoundException(
-              `Product with ID ${item.product} not found`,
-            );
-          }
-        }
-      }
+  // async update(id: string, data: any, userId?: string): Promise<Order> {
+  //   const updateOrderDto: any = data;
+  //   this.logger.log(`Updating order with ID: ${id}`);
+  //   try {
+  //     // If updating items, validate products again
+  //     if (updateOrderDto.items) {
+  //       for (const item of updateOrderDto.items) {
+  //         const product = await this.productModel.findById(item.product).exec();
+  //         if (!product) {
+  //           this.logger.warn(
+  //             `Product with ID ${item.product} not found during update`,
+  //           );
+  //           throw new NotFoundException(
+  //             `Product with ID ${item.product} not found`,
+  //           );
+  //         }
+  //       }
+  //     }
 
-      const { subTotal, totalAmount } = await this.calculateOrderTotals(
-        updateOrderDto as any,
-      );
+  //     const { subTotal, totalAmount } = await this.calculateOrderTotals(
+  //       updateOrderDto as any,
+  //     );
 
-      const order = await this.orderModel
-        .findByIdAndUpdate(
-          id,
-          { ...updateOrderDto, subTotal, totalAmount },
-          { new: true },
-        )
+  //     const order = await this.orderModel
+  //       .findByIdAndUpdate(
+  //         id,
+  //         { ...updateOrderDto, subTotal, totalAmount },
+  //         { new: true },
+  //       )
 
-        .exec();
+  //       .exec();
 
-      if (!order) {
-        this.logger.warn(`Order with ID ${id} not found during update`);
-        throw new NotFoundException(`Order with ID ${id} not found`);
-      }
+  //     if (!order) {
+  //       this.logger.warn(`Order with ID ${id} not found during update`);
+  //       throw new NotFoundException(`Order with ID ${id} not found`);
+  //     }
 
-      this.logger.log(`Order updated successfully: ${id}`);
-      this.orderGateway.emitOrderUpdated(order);
-      this.logger.debug(`Order update event emitted for ID: ${id}`);
+  //     this.logger.log(`Order updated successfully: ${id}`);
+  //     this.orderGateway.emitOrderUpdated(order);
+  //     this.logger.debug(`Order update event emitted for ID: ${id}`);
 
-      return order;
-    } catch (error) {
-      this.logger.error(
-        `Failed to update order: ${error.message}`,
-        error.stack,
-      );
-      throw error;
-    }
-  }
+  //     return order;
+  //   } catch (error) {
+
+  //     throw error;
+  //   }
+  // }
 
   async updateStatus(
     id: string,
@@ -457,16 +552,12 @@ export class OrderService {
 
       this.logger.log(`Order status updated to ${status}: ${id}`);
 
-      this.orderGateway.emitOrderStatusUpdated(updated);
+      //this.orderGateway.emitOrderStatusUpdated(updated);
       console.log('emitted order status update');
       this.logger.debug(`Order status update event emitted for ID: ${id}`);
 
       return updated;
     } catch (error) {
-      this.logger.error(
-        `Failed to update order status: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -487,12 +578,8 @@ export class OrderService {
 
       // Only allow cancellation of == OrderStatus.CONFIRMED orders
       if (order.status === OrderStatus.CONFIRMED) {
-        // Update product stock
-        for (const item of order.items) {
-          await this.productModel.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity },
-          });
-        }
+        // Restore inventory stock from transaction records
+        //await this.restoreInventoryStock(id);
       }
 
       const cancelledOrder = await this.orderModel
@@ -509,13 +596,9 @@ export class OrderService {
         )
         .exec();
 
-      this.orderGateway.emitOrderStatusUpdated(cancelledOrder);
+      //this.orderGateway.emitOrderStatusUpdated(cancelledOrder);
       return cancelledOrder;
     } catch (error) {
-      this.logger.error(
-        `Failed to cancel order confirmation: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }
@@ -542,27 +625,19 @@ export class OrderService {
         );
       }
 
-      // If deleting a pending order, restore product stock
+      // If deleting a pending order, restore inventory stock from transaction records
       if (order.status === OrderStatus.PENDING) {
-        for (const item of order.items) {
-          await this.productModel.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity },
-          });
-        }
-        this.logger.debug(`Product stock restored for order: ${id}`);
+        // await this.restoreInventoryStock(id);
+        this.logger.debug(`Inventory stock restored for order: ${id}`);
       }
 
       await this.orderModel.findByIdAndDelete(id).exec();
       this.logger.log(`Order deleted successfully: ${id}`);
 
       // Emit real-time event for order deletion
-      this.orderGateway.emitOrderDeleted(id);
+      //this.orderGateway.emitOrderDeleted(id);
       this.logger.debug(`Order deletion event emitted for ID: ${id}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to remove order: ${error.message}`,
-        error.stack,
-      );
       throw error;
     }
   }

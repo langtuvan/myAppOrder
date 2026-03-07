@@ -1,7 +1,7 @@
 "use client";
 import { LoadingScreen } from "@/components/loading";
 import OrderDetail from "@/components/OrderDetail";
-import { useOrder, WebsiteOrderDto } from "@/hooks/useOrders";
+import { useOrder } from "@/hooks/useOrders";
 import { useParams } from "next/navigation";
 
 export default function OrderDetailPage() {
@@ -13,7 +13,7 @@ export default function OrderDetailPage() {
   }
 
   if (data) {
-    return <OrderDetail order={data as WebsiteOrderDto} />;
+    return <OrderDetail order={data} />;
   }
   return null;
 }

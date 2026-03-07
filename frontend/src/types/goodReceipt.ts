@@ -43,9 +43,9 @@ export interface GoodsReceiptItems {
 
 export interface GoodsReceiptItemDto {
   product: { _id: string; name: string };
+  warehouse: { _id: string; name: string };
   quantity: number;
   price: number;
-  warehouse: { _id: string; name: string };
 }
 
 export interface UpdateGoodsReceiptDto extends Partial<CreateGoodsReceiptDto> {}

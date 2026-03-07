@@ -4,10 +4,10 @@ import { useCartStore } from "../store/cart";
 import { useRouter } from "next/navigation";
 import { CheckIcon, ClockIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { products } from "@/store/poducts";
+
 import { fCurrencyVND } from "@/utils/format-number";
 import UseImage from "@/hooks/useImage";
-import { deliveryMethods } from "@/hooks/useOrders";
+
 import { ECOMMERCE_VARIABLES } from "@/config-global";
 
 export default function CartSumary() {

@@ -79,6 +79,24 @@ export const vi: typeof en = {
       list: "Danh Sách Nhập Kho",
       form: {},
     },
+    issueReceipts: {
+      title: "Xuất Kho",
+      list: "Danh Sách Xuất Kho",
+      form: {
+        name: "Tên Phiếu Xuất",
+        warehouse: "Kho",
+        customer: "Khách Hàng",
+        note: "Ghi Chú",
+        deliveryNote: "Phiếu Giao Hàng",
+        deliveryDate: "Ngày Giao Hàng",
+        items: {
+          product: "Mặt Hàng",
+          warehouse: "Kho",
+          quantity: "Số Lượng",
+          price: "Giá",
+        },
+      },
+    },
   },
   system: {
     users: {

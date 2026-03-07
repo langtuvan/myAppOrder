@@ -2,6 +2,7 @@
 // ROUTER PATHS - Booking System
 // ==============================
 
+import { i } from "motion/react-client";
 import { reset } from "numeral";
 
 export const paths = {
@@ -114,9 +115,20 @@ export const paths = {
         restore: (id: string) =>
           `/dashboard/inventory/goods-receipts/${id}/restore`,
       },
+      issueReceipts: {
+        root: "/dashboard/inventory/issue-receipts",
+        list: "/dashboard/inventory/issue-receipts",
+        create: "/dashboard/inventory/issue-receipts/add",
+        edit: (id: string) => `/dashboard/inventory/issue-receipts/${id}/edit`,
+        view: (id: string) => `/dashboard/inventory/issue-receipts/${id}`,
+        delete: (id: string) =>
+          `/dashboard/inventory/issue-receipts/${id}/delete`,
+        restore: (id: string) =>
+          `/dashboard/inventory/issue-receipts/${id}/restore`,
+      },
       inventory: {
         root: "/dashboard/inventory/inventory",
-        list: "/dashboard/inventory/inventory",      
+        list: "/dashboard/inventory/inventory",
       },
       suppliers: {
         root: "/dashboard/inventory/suppliers",

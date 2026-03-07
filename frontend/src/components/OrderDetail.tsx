@@ -1,19 +1,24 @@
-import { deliveryMethods, WebsiteOrderDto } from "@/hooks/useOrders";
+import { WebsiteOrderDto } from "@/hooks/useOrders";
 import { fCurrencyVND } from "@/utils/format-number";
 import vietNamLocation from "@/mock/provinces_and_wards_full.json";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import UseImage from "@/hooks/useImage";
 import { getLocation } from "@/utils/getLocation";
+import { deliveryMethods, Order } from "@/types/order";
 
-export default function OrderDetail({ order }: { order: WebsiteOrderDto }) {
+export default function OrderDetail({ order }: { order: Order }) {
   const [findLocation, setFindLocation] = useState("");
+
   useEffect(() => {
-    setFindLocation(getLocation(order?.province, order?.ward).fullLocation);
+    setFindLocation(
+      getLocation(order?.delivery?.province, order?.delivery?.ward as any)
+        .fullLocation,
+    );
   }, [order]);
 
   const deliveryInfo = deliveryMethods.find(
-    (dm) => dm.id === order.deliveryMethod
+    (dm) => dm.id === order?.delivery?.deliveryMethod,
   );
   return (
     <main className=" px-4 pt-16 pb-24 sm:px-6 sm:pt-24 lg:px-8 lg:py-32">
@@ -88,8 +93,10 @@ export default function OrderDetail({ order }: { order: WebsiteOrderDto }) {
                 <dt className="font-medium ">Shipping address</dt>
                 <dd className="mt-2 ">
                   <address className="not-italic">
-                    <span className="block">{order.customerName}</span>
-                    <span className="block">{order.address}</span>
+                    <span className="block">
+                      {order?.delivery?.receiptName}
+                    </span>
+                    <span className="block">{order?.delivery?.address}</span>
                     <span className="block">{findLocation}</span>
                   </address>
                 </dd>
@@ -98,8 +105,10 @@ export default function OrderDetail({ order }: { order: WebsiteOrderDto }) {
                 <dt className="font-medium ">Billing address</dt>
                 <dd className="mt-2 ">
                   <address className="not-italic">
-                    <span className="block">{order.customerName}</span>
-                    <span className="block">{order.address}</span>
+                    <span className="block">
+                      {order?.delivery?.receiptName}
+                    </span>
+                    <span className="block">{order?.delivery?.address}</span>
                     <span className="block">{findLocation}</span>
                   </address>
                 </dd>
@@ -111,8 +120,8 @@ export default function OrderDetail({ order }: { order: WebsiteOrderDto }) {
               <div>
                 <dt className="font-medium ">Payment method</dt>
                 <dd className="mt-2 ">
-                  <p>{order.paymentMethod}</p>
-                  <p>{order.paymentStatus}</p>
+                  <p>{order.payment.paymentMethod}</p>
+                  <p>{order.payment.paymentStatus}</p>
                   {/* <p>Mastercard</p> */}
                   {/* <p>
                     <span aria-hidden="true">••••</span>
@@ -134,12 +143,16 @@ export default function OrderDetail({ order }: { order: WebsiteOrderDto }) {
             <dl className="space-y-6 border-t border-gray-200 pt-10 text-sm">
               <div className="flex justify-between">
                 <dt className="font-medium ">Subtotal</dt>
-                <dd className="">{fCurrencyVND(order?.subTotal || 0)}</dd>
+                <dd className="">
+                  {fCurrencyVND(order?.billing.subTotal || 0)}
+                </dd>
               </div>
 
               <div className="flex justify-between">
                 <dt className="font-medium ">Shipping</dt>
-                <dd className="">{fCurrencyVND(order?.deliveryPrice)}</dd>
+                <dd className="">
+                  {fCurrencyVND(order?.billing.deliveryPrice)}
+                </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="flex font-medium ">
@@ -148,24 +161,26 @@ export default function OrderDetail({ order }: { order: WebsiteOrderDto }) {
                     STUDENT50
                   </span> */}
                 </dt>
-                <dd className="">{fCurrencyVND(order?.discount || 0)}</dd>
+                <dd className="">
+                  {fCurrencyVND(order?.billing.discount || 0)}
+                </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="flex font-medium ">
                   Taxes
-                  <span className="ml-2 rounded-full bg-gray-200 text-gray-600 px-2 py-0.5 text-xs ">
+                  {/* <span className="ml-2 rounded-full bg-gray-200 text-gray-600 px-2 py-0.5 text-xs ">
                     {order?.taxes * 100}%
-                  </span>
+                  </span> */}
                 </dt>
                 <dd className="">
                   {fCurrencyVND(
-                    ((order?.taxes * (order?.subTotal ?? 0)) as number) || 0
+                    ((order?.billing.subTotal ?? 0) as number) || 0,
                   )}
                 </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="font-medium ">Total</dt>
-                <dd className="">{fCurrencyVND(order?.totalAmount || 0)}</dd>
+                <dd className="">{fCurrencyVND(order?.billing.totalAmount || 0)}</dd>
               </div>
             </dl>
           </div>

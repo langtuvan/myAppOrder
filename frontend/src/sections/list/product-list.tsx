@@ -30,25 +30,34 @@ import { HOST_API_BASE } from "@/config-global";
 import { fCurrencyVND } from "@/utils/format-number";
 
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { Item, OrderStatus } from "@/hooks/useOrders";
+import { Item, OrderStatus } from "@/types/order";
 import { uuidv7 } from "uuidv7";
 import clsx from "clsx";
 import { NoImageSvg } from "@/components/no-image-svg";
 import { Category } from "@/types/category";
 import { Fragment } from "react/jsx-runtime";
 import UseImage from "@/hooks/useImage";
-import { MagnifyingGlassIcon, StarIcon } from "@heroicons/react/24/outline";
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  StarIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { paramCase } from "@/utils/change-case";
-import { use } from "react";
 import AddToCartButton from "@/components/AddToCartButton";
-import { Input as HeadlessInput } from "@headlessui/react";
 import { Input } from "@/components/input";
 import Link from "next/link";
 import { useCartStore } from "@/store/cart";
 import { DropDownToggleTheme } from "@/components/ThemeToggle";
+import {
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogTitle,
+} from "@/components/dialog";
 
 type ColumnVisibilityState = Record<keyof Product, boolean>;
 
@@ -439,7 +448,9 @@ export function ProductListFormPicker({ data }: { data: Product[] }) {
   );
 }
 
-export function ProductGridList({ query }: { query: string }) {
+export function ProductGridListModal({ open = false }: { open?: boolean }) {
+  const [openProducListModal, setOpenProductListModal] = useState(open);
+  const [query, setQuery] = useState("");
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const methods = useFormContext();
@@ -490,56 +501,80 @@ export function ProductGridList({ query }: { query: string }) {
         Products
       </h2>
 
-      <div>
-        {categories?.length > 0 &&
-          categories.map((category) => (
-            <Fragment key={category._id}>
-              <p className="my-4 mt-12 text-lg lg:text-xl font-medium ">
-                {category.name}
-              </p>
-              <div className="-mx-px grid grid-cols-2 border-l border-gray-200 sm:mx-0 md:grid-cols-3 lg:grid-cols-5">
-                {filteredProducts?.length > 0 &&
-                  filteredProducts
-                    .filter((product) => product.category._id === category._id)
-                    .map((product) => (
-                      <div
-                        key={product._id}
-                        className="group relative border-r border-b border-t border-gray-200 p-4 sm:p-6"
-                      >
-                        <UseImage
-                          alt={product.name}
-                          src={
-                            product.images.length > 0 ? product.images[0] : ""
-                          }
-                          width={100}
-                          height={100}
-                        />
-                        <div className="pt-10 pb-4 text-center">
-                          <div className="mt-3 flex flex-col items-center">
-                            <h3 className="text-sm font-medium ">
-                              <span aria-hidden="true" className="" />
-                              {product.name}
-                            </h3>
-                          </div>
-                          <p className=" text-base font-medium ">
-                            {fCurrencyVND(product.price)}
-                          </p>
-                          <div className="mt-4">
-                            <Button
-                              color="indigo"
-                              onClick={() => handleAddItem(product)}
-                              className="active:scale-95"
-                            >
-                              Add to cart
-                            </Button>
+      <div className="flex justify-end p-3">
+        <Button color="teal" onClick={() => setOpenProductListModal(true)}>
+          <PlusIcon /> Add
+        </Button>
+      </div>
+
+      <Dialog
+        open={openProducListModal}
+        onClose={() => setOpenProductListModal(false)}
+        className="min-w-screen"
+      >
+        <DialogTitle className="sticky top-0 flex flex-row gap-3 justify-between items-center bg-white dark:bg-gray-950 z-10 border-b border-gray-200 dark:border-gray-700 py-4 ">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            //className="col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pr-3 pl-10 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
+          />
+          <Button onClick={() => setOpenProductListModal(false)} color="indigo">
+            <XMarkIcon />
+          </Button>
+        </DialogTitle>
+        <DialogBody>
+          {categories?.length > 0 &&
+            categories.map((category) => (
+              <Fragment key={category._id}>
+                <p className="my-4 mt-12 text-lg lg:text-xl font-medium ">
+                  {category.name}
+                </p>
+                <div className="-mx-px grid grid-cols-2 border-l border-gray-200 sm:mx-0 md:grid-cols-3 lg:grid-cols-5">
+                  {filteredProducts?.length > 0 &&
+                    filteredProducts
+                      .filter(
+                        (product) => product.category._id === category._id,
+                      )
+                      .map((product) => (
+                        <div
+                          key={product._id}
+                          className="group relative border-r border-b border-t border-gray-200 p-4 sm:p-6"
+                        >
+                          <UseImage
+                            alt={product.name}
+                            src={
+                              product.images.length > 0 ? product.images[0] : ""
+                            }
+                            width={100}
+                            height={100}
+                          />
+                          <div className="pt-10 pb-4 text-center">
+                            <div className="mt-3 flex flex-col items-center">
+                              <h3 className="text-sm font-medium ">
+                                <span aria-hidden="true" className="" />
+                                {product.name}
+                              </h3>
+                            </div>
+                            <p className=" text-base font-medium ">
+                              {fCurrencyVND(product.price)}
+                            </p>
+                            <div className="mt-4">
+                              <Button
+                                color="indigo"
+                                onClick={() => handleAddItem(product)}
+                                className="active:scale-95"
+                              >
+                                Add to cart
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-              </div>
-            </Fragment>
-          ))}
-      </div>
+                      ))}
+                </div>
+              </Fragment>
+            ))}
+        </DialogBody>
+      </Dialog>
     </section>
   );
 }
@@ -685,7 +720,7 @@ export function ProductGridListMain({
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white dark:bg-zinc-800 p-2 md:p-4 sm:px-6 lg:px-0">
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Link href={cart.length > 0 ? "/cart-summary" : "#"}>
+          <Link href={cart.length > 0 ? "/check-out" : "#"}>
             <div className="min-w-full text-center cursor-pointer rounded-md border border-transparent bg-indigo-600 dark:bg-white dark:text-indigo-600 px-4 py-3 text-base font-medium text-white shadow-xs hover:bg-indigo-700 dark:hover:bg-gray-100 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-50 focus:outline-hidden">
               Shopping Cart{" "}
               <span className="p-2 px-3 ml-3 bg-white dark:bg-zinc-800 dark:text-white rounded-full text-gray-800">

@@ -104,6 +104,17 @@ export class CustomerService {
     return customers;
   }
 
+  //find One by phone
+  async findOneByPhone(phone: string): Promise<CustomerDocument> {
+    const customer = await this.customerModel
+      .findOne({ phone: { $regex: phone, $options: 'i' }, deleted: false })
+      .exec();
+    if (!customer) {
+      throw new NotFoundException(`Customer with phone ${phone} not found`);
+    }
+    return customer;
+  }
+
   async update(
     id: string,
     updateCustomerDto: UpdateCustomerDto,

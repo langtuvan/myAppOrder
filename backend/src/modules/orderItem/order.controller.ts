@@ -46,7 +46,8 @@ export class OrderController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 404, description: 'Product not found.' })
   createPublic(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
+    // user '69abaf2b1863adf7757b229a' is user for website order
+    return this.orderService.create(createOrderDto, '69abaf2b1863adf7757b229a');
   }
 
   //createdAt
@@ -127,25 +128,25 @@ export class OrderController {
     return this.orderService.findOne(id);
   }
 
-  @Patch(':id')
-  @CheckPermission('orders', 'update')
-  @ApiOperation({ summary: 'Update an order' })
-  @ApiParam({
-    name: 'id',
-    description: 'Order ID (UUIDv7)',
-    example: '01HZKY7X5Q8B9J2M6N4P7R1S3T',
-  })
-  @ApiBody({ type: UpdateOrderDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Order has been successfully updated.',
-    type: OrderResponseDto,
-  })
-  @ApiResponse({ status: 404, description: 'Order not found.' })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(id, updateOrderDto);
-  }
+  // @Patch(':id')
+  // @CheckPermission('orders', 'update')
+  // @ApiOperation({ summary: 'Update an order' })
+  // @ApiParam({
+  //   name: 'id',
+  //   description: 'Order ID (UUIDv7)',
+  //   example: '01HZKY7X5Q8B9J2M6N4P7R1S3T',
+  // })
+  // @ApiBody({ type: UpdateOrderDto })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Order has been successfully updated.',
+  //   type: OrderResponseDto,
+  // })
+  // @ApiResponse({ status: 404, description: 'Order not found.' })
+  // @ApiResponse({ status: 400, description: 'Bad Request.' })
+  // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
+  //   return this.orderService.update(id, updateOrderDto);
+  // }
 
   @Delete(':id')
   @CheckPermission('orders', 'delete')
@@ -248,36 +249,36 @@ export class OrderController {
     // check product availability
     // if status is Confirm Validate that all products exist and are available
     // if status is confirm Update product stock
-    await this.orderService.CheckProductAvailability(order);
+    //await this.orderService.validateProductAvailabilityByInventory(order);
 
     return this.orderService.updateStatus(id, OrderStatus.CONFIRMED, user.id);
   }
 
-  @Patch(`:id/` + OrderStatus.EXPORTED)
-  @CheckPermission('orders', OrderStatus.EXPORTED)
-  updateStatusExported(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.orderService.updateStatus(id, OrderStatus.EXPORTED, user.id);
-  }
+  // @Patch(`:id/` + OrderStatus.EXPORTED)
+  // @CheckPermission('orders', OrderStatus.EXPORTED)
+  // updateStatusExported(@Param('id') id: string, @CurrentUser() user: any) {
+  //   return this.orderService.updateStatus(id, OrderStatus.EXPORTED, user.id);
+  // }
 
-  @Patch(`:id/` + OrderStatus.DELIVERED)
-  @CheckPermission('orders', OrderStatus.DELIVERED)
-  async updateStatusDelivered(
-    @Param('id') id: string,
-    @CurrentUser() user: any,
-  ) {
-    //  paymentStatus need to be 'paid' before setting to delivered
-    // find order
-    let order = await this.orderService.findOne(id);
-    if (!order) {
-      throw new NotFoundException(`Order with ID ${id} not found`);
-    }
+  // @Patch(`:id/` + OrderStatus.DELIVERED)
+  // @CheckPermission('orders', OrderStatus.DELIVERED)
+  // async updateStatusDelivered(
+  //   @Param('id') id: string,
+  //   @CurrentUser() user: any,
+  // ) {
+  //   //  paymentStatus need to be 'paid' before setting to delivered
+  //   // find order
+  //   let order = await this.orderService.findOne(id);
+  //   if (!order) {
+  //     throw new NotFoundException(`Order with ID ${id} not found`);
+  //   }
 
-    return this.orderService.updateStatus(id, OrderStatus.DELIVERED, user.id, {
-      paymentStatus: PaymentStatus.PAID,
-      deliveryBy: user.id,
-      deliveredAt: new Date(),
-    });
-  }
+  //   return this.orderService.updateStatus(id, OrderStatus.DELIVERED, user.id, {
+  //     paymentStatus: PaymentStatus.PAID,
+  //     deliveryBy: user.id,
+  //     deliveredAt: new Date(),
+  //   });
+  // }
 
   @Patch(`:id/` + OrderStatus.COMPLETED)
   @CheckPermission('orders', OrderStatus.COMPLETED)

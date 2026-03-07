@@ -182,5 +182,20 @@ export class CustomerController {
   async findByPhone(@Param('phone') phone: string) {
     const customers = await this.customerService.findByPhone(phone);
     return customers.map(toCustomerResponse);
+  }// get one customer by phone number
+  @Get('one-by-phone/:phone')
+  @Public()
+  @ApiOperation({ summary: 'Get one customer by phone number' })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer retrieved successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Customer not found',
+  })
+  async findOneByPhone(@Param('phone') phone: string) {
+    const customer = await this.customerService.findOneByPhone(phone);
+    return toCustomerResponse(customer);
   }
 }

@@ -41,8 +41,9 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks";
 import { KeyIcon } from "@heroicons/react/24/outline";
 import { DropDownToggleTheme } from "@/components/ThemeToggle";
-import { OrderStatus } from "@/hooks/useOrders";
-import { act, useMemo } from "react";
+
+import { useMemo } from "react";
+import { OrderStatus } from "@/types/order";
 
 const navItems = [
   { label: "Report", url: "/dashboard", action: "orders:update" },

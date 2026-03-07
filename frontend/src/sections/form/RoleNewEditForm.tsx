@@ -44,6 +44,7 @@ export default function RoleNewEditForm({ currentData }: Props) {
   const router = useRouter();
   // fetch data
   const { data: permissionsData } = usePermissions();
+  console.log("permissionsData", permissionsData);
   const { data: moduleData } = useModules();
   //use lodash groupBy to group permissions by module name
   const groupedPermissions = useMemo(() => {
@@ -143,9 +144,64 @@ export default function RoleNewEditForm({ currentData }: Props) {
 
               <RHFCheckBoxField name="isActive" label="Active" color="blue" />
 
-              {/* {map group} */}
+              {/* {map module and filter permissions by module} */}
+              {moduleData?.map((module) => {
+                const permissions =
+                  permissionsData?.filter(
+                    (perm: any) => perm?.module === module._id,
+                  ) || [];
+                if (permissions.length === 0) return null;
+                return (
+                  <div
+                    key={module._id}
+                    className="space-y-4 ring-1 ring-gray-200 dark:ring-gray-700 p-4 rounded-lg"
+                  >
+                    <Heading>{module.name} Permissions</Heading>
+                    <Text>{module.description}</Text>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {permissions.map((permission: any) => {
+                        const defaultChecked = selectedPermissions.includes(
+                          permission._id,
+                        );
+                        return (
+                          <SwitchField
+                            key={permission._id}
+                            className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 bg-gray-50 dark:bg-zinc-800 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            <div className="flex-1">
+                              <Badge
+                                color={
+                                  (methodColors[permission.method] as any) ||
+                                  "gray"
+                                }
+                              >
+                                {permission.method}
+                              </Badge>
+                              <Text className="text-nowrap mt-2">
+                                {permission.name}
+                              </Text>
+                              <Text className="text-nowrap">
+                                {permission.action}
+                              </Text>
+                            </div>
+                            <Switch
+                              name={`permissions.${permission._id}`}
+                              color="blue"
+                              checked={defaultChecked}
+                              onChange={(e) =>
+                                setSelectedPermissions(permission._id, e)
+                              }
+                            />
+                          </SwitchField>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
               {/* Permissions grouped by module */}
-              {Object.entries(groupedPermissions).map(
+              {/* {Object.entries(groupedPermissions).map(
                 ([moduleId, permissions]) => {
                   const findModule = moduleData?.find(
                     (mod) => mod._id === moduleId,
@@ -199,7 +255,7 @@ export default function RoleNewEditForm({ currentData }: Props) {
                     </div>
                   );
                 },
-              )}
+              )} */}
             </div>
 
             <LoadingButton

@@ -1,6 +1,7 @@
 "use client";
-import { useOrder, type Order } from "@/hooks/useOrders";
-import OrderNewEditForm, { StepType } from "@/sections/form/OrderNewEditForm";
+import { useOrder } from "@/hooks/useOrders";
+import OrderNewEditForm from "@/sections/form/OrderNewEditForm";
+import { Order } from "@/types/order";
 import { useParams } from "next/navigation";
 
 export default function OrderPage() {
@@ -9,7 +10,7 @@ export default function OrderPage() {
   // if editing, fetch data
   const { data } = useOrder(id);
 
-  return (
-    <OrderNewEditForm currentData={data} defaultStep={StepType.CHECKOUT} />
-  );
+  console.log("Fetched order data:", data);
+
+  return <OrderNewEditForm currentData={data as Order} />;
 }

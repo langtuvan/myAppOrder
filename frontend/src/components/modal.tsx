@@ -11,9 +11,11 @@ import { DialogProps } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { Heading } from "./heading";
+import clsx from "clsx";
 
 type ModalFormProps = {
   open?: boolean;
+  onClose?: () => void;
   dialogTitle?: string;
   dialogDescription?: string;
   dialogActions?: React.ReactNode;
@@ -23,6 +25,48 @@ type ModalFormProps = {
 };
 
 export function ModalLayout({
+  className,
+  dialogTitle,
+  dialogDescription,
+  children,
+  dialogActions,
+  size = "md",
+  open = true,
+  onClose,
+}: ModalFormProps) {
+  const router = useRouter();
+
+  const handleClose = onClose ? onClose : () => router.back();
+
+  return (
+    <Dialog
+      open={true}
+      onClose={() => {
+        console.log("closed modal");
+      }}
+      size={size}
+      className={className}
+    >
+      <DialogTitle>
+        <div className="flex justify-between items-center">
+          {dialogTitle && (
+            <Heading className="uppercase">{dialogTitle}</Heading>
+          )}
+          <Button plain onClick={() => handleClose()}>
+            <XMarkIcon />
+          </Button>
+        </div>
+      </DialogTitle>
+      {dialogDescription && (
+        <DialogDescription>{dialogDescription}</DialogDescription>
+      )}
+      <DialogBody>{children}</DialogBody>
+      {dialogActions && <DialogActions>{dialogActions}</DialogActions>}
+    </Dialog>
+  );
+}
+
+export function ModalLayoutFullScreen({
   className,
   dialogTitle,
   dialogDescription,
@@ -39,10 +83,13 @@ export function ModalLayout({
         console.log("closed");
       }}
       size={size}
-      className={className}
+      className={clsx(
+        className,
+        "min-w-screen w-screen h-screen flex flex-col gap-2 p-0 rounded-none",
+      )}
     >
-      <DialogTitle>
-        <div className="flex justify-between items-center">
+      <div className="flex-none">
+        <div className="flex justify-between items-center p-2">
           {dialogTitle && (
             <Heading className="uppercase">{dialogTitle}</Heading>
           )}
@@ -50,12 +97,16 @@ export function ModalLayout({
             <XMarkIcon />
           </Button>
         </div>
-      </DialogTitle>
+      </div>
       {dialogDescription && (
-        <DialogDescription>{dialogDescription}</DialogDescription>
+        <div className="flex-none">{dialogDescription}</div>
       )}
-      <DialogBody>{children}</DialogBody>
-      {dialogActions && <DialogActions>{dialogActions}</DialogActions>}
+      {children}
+      {dialogActions && (
+        <div className="flex-none w-full min-w-full flex justify-end">
+          {dialogActions}
+        </div>
+      )}
     </Dialog>
   );
 }

@@ -39,6 +39,7 @@ export default function RHFTextCurrencyField({
         const { value, ...copyField } = field;
         const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
           const raw = event.target.value.replace(/,/g, "");
+          console.log("🚀 ~ file: RHFTextCurrencyField.tsx:49 ~ handleOnChange ~ raw:", raw);
           if (/^\d*\.?\d*$/.test(raw)) {
             const newPrice = parseFloat(raw === "" ? "" : raw);
             field.onChange(newPrice);

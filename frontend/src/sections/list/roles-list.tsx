@@ -151,105 +151,94 @@ export function RoleList({
         onChange={(e) => setGlobalFilter(e.target.value)}
       />
 
-      {/* Table */}
-      <div
-        style={{
-          width: "100%",
-          minWidth: table.getTotalSize(),
-          overflow: "auto",
-        }}
+      <Table
+        dense
+        grid
+        striped
+        //className="overflow-x-auto"
+        style={{ width: "100%", minWidth: table.getTotalSize() }}
       >
-        <Table
-          dense
-          grid
-          striped
-          style={{ width: "100%", minWidth: table.getTotalSize() }}
-        >
-          <TableHead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const size = header.getSize();
+        <TableHead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                const size = header.getSize();
+                return (
+                  <TableHeader
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    style={{
+                      width:
+                        size === Number.MAX_SAFE_INTEGER ? "auto" : `${size}px`,
+                      position: "relative",
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {header.column.getIsSorted() && (
+                          <HeaderSortIcon
+                            sorted={
+                              header.column.getIsSorted() as "asc" | "desc"
+                            }
+                          />
+                        )}
+                      </div>
+                      {header.column.getCanResize() && (
+                        <div
+                          role="presentation"
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className="w-1 h-6  bg-gray-300 hover:bg-blue-500 cursor-col-resize select-none touch-none"
+                        />
+                      )}
+                    </div>
+                  </TableHeader>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHead>
+        <TableBody>
+          {isLoading ? (
+            <TableRowSkeleton row={3} col={columns.length} />
+          ) : table.getRowModel().rows.length > 0 ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                href={paths.dashboard.system.roles.edit(row.original._id!)}
+                className="cursor-pointer hover:bg-gray-50"
+              >
+                {row.getVisibleCells().map((cell) => {
+                  const size = cell.column.getSize();
                   return (
-                    <TableHeader
-                      key={header.id}
-                      onClick={header.column.getToggleSortingHandler()}
+                    <TableCell
+                      key={cell.id}
                       style={{
                         width:
                           size === Number.MAX_SAFE_INTEGER
                             ? "auto"
                             : `${size}px`,
-                        position: "relative",
                       }}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {header.column.getIsSorted() && (
-                            <HeaderSortIcon
-                              sorted={
-                                header.column.getIsSorted() as "asc" | "desc"
-                              }
-                            />
-                          )}
-                        </div>
-                        {header.column.getCanResize() && (
-                          <div
-                            role="presentation"
-                            onMouseDown={header.getResizeHandler()}
-                            onTouchStart={header.getResizeHandler()}
-                            className="w-1 h-6  bg-gray-300 hover:bg-blue-500 cursor-col-resize select-none touch-none"
-                          />
-                        )}
-                      </div>
-                    </TableHeader>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
                   );
                 })}
               </TableRow>
-            ))}
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRowSkeleton row={3} col={columns.length} />
-            ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  href={paths.dashboard.system.roles.edit(row.original._id!)}
-                  className="cursor-pointer hover:bg-gray-50"
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const size = cell.column.getSize();
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        style={{
-                          width:
-                            size === Number.MAX_SAFE_INTEGER
-                              ? "auto"
-                              : `${size}px`,
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              !globalFilter && <TableRowNoData col={columns.length} />
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Result summary */}
+            ))
+          ) : (
+            !globalFilter && <TableRowNoData col={columns.length} />
+          )}
+        </TableBody>
+        {/* Result summary */}
+      </Table>
       {globalFilter && (
         <GlobalFilterRowCount
           rowCount={table.getFilteredRowModel().rows.length}

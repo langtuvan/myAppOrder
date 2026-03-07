@@ -6,146 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { HOST_SOCKET } from "@/config-global";
 import { usePermission } from "./usePermission";
-
-export enum DeliveryMethod {
-  NONE = "none",
-  STANDARD = "standard",
-  EXPRESS = "express",
-}
-
-export const deliveryMethods = [
-  {
-    id: DeliveryMethod.NONE,
-    title: "None Delivery",
-    turnaround: "customer will pick up",
-    price: 0,
-  },
-  {
-    id: DeliveryMethod.STANDARD,
-    title: "Standard",
-    turnaround: "3–5 business days",
-    price: 20000,
-  },
-  {
-    id: DeliveryMethod.EXPRESS,
-    title: "Express",
-    turnaround: "1-2 business days",
-    price: 30000,
-  },
-];
-
-export enum OrderStatus {
-  All = "all",
-  CANCELLED = "cancelled",
-  PENDING = "pending",
-  CONFIRMED = "confirmed",
-  PROCESSING = "processing",
-  SHIPPED = "shipped",
-  DELIVERED = "delivered",
-  EXPORTED = "exported",
-  COMPLETED = "completed",
-  OVER_DUE = "overdue",
-}
-
-export enum StatusColor {
-  CANCELLED = "red",
-  PENDING = "yellow",
-  CONFIRMED = "blue",
-  PROCESSING = "indigo",
-  SHIPPED = "purple",
-  DELIVERED = "teal",
-  EXPORTED = "cyan",
-  COMPLETED = "green",
-  OVER_DUE = "orange",
-}
-
-export enum PaymentMethod {
-  CASH = "cash",
-  CREDIT_CARD = "credit-card",
-  ETRANSFER = "etransfer",
-  QR_CODE = "qrCode",
-}
-
-export enum PaymentStatus {
-  PAID = "paid",
-  UNPAID = "unpaid",
-}
-
-export interface Item {
-  _id?: string;
-  product: string;
-  productName: string;
-  imageSrc: string;
-  quantity: number;
-  price: number;
-  status: OrderStatus;
-  //
-  date?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  //
-}
-
-export enum OrderType {
-  WEBSITE = "website",
-  IN_STORE = "in-store",
-  DELIVERY = "delivery",
-}
-
-export enum OrderExport {
-  QUICK = "quick",
-  NORMAL = "normal",
-}
-
-export const paymentMethods = [
-  { id: PaymentMethod.CASH, title: "Cash" },
-  { id: PaymentMethod.ETRANSFER, title: "eTransfer" },
-  { id: PaymentMethod.QR_CODE, title: "QR Code" },
-];
-
-export interface Order {
-  _id?: string; //uuidv7()
-  trackingNumber?: string;
-  orderType: OrderType;
-  // customer info
-  customerName: string;
-  customerPhone: string;
-  customerEmail?: string;
-  // status
-  status: OrderStatus;
-  notes?: string;
-  // // timestamps
-  createdAt?: string;
-  updatedAt?: string;
-  items: Item[];
-  // payment method
-  paymentMethod: PaymentMethod;
-  customerPay?: number;
-  customerPayCod?: number;
-  paymentStatus: PaymentStatus;
-  paymentCardNumber?: string;
-  paymentCode?: string;
-  orderExport: OrderExport;
-  taxes: number;
-  discount: number;
-  subTotal?: number;
-  totalAmount?: number;
-  // delivery info
-  deliveryMethod: DeliveryMethod;
-  deliveryPrice: number;
-
-  // // shipping address
-  province?: string;
-  ward?: string;
-  address?: string;
-}
-
-// export interface DeliveryOrderDto extends Order {
-//   // // shipping address
-//   province?: string;
-//   ward?: string;
-//   address?: string;
-// }
+import { Order, OrderStatus, OrderDto, UpdateOrderDto } from "@/types/order";
 
 export interface InStoreOrderDto extends Order {}
 export interface WebsiteOrderDto extends Order {
@@ -154,12 +15,6 @@ export interface WebsiteOrderDto extends Order {
   ward: string;
   address: string;
 }
-export interface CreateOrderDto extends Omit<
-  Order,
-  "_id" | "trackingNumber" | "createdAt" | "updatedAt"
-> {}
-
-export interface UpdateOrderDto extends Partial<CreateOrderDto> {}
 
 // Query Keys
 export const orderKeys = {
@@ -439,7 +294,7 @@ export function useOrdersByPhone(phone: string, enabled = true) {
 export function useOrder(id: string, enabled = true) {
   return useQuery({
     queryKey: orderKeys.detail(id),
-    queryFn: async (): Promise<Order | WebsiteOrderDto> => {
+    queryFn: async (): Promise<Order> => {
       const response = await axiosInstance.get(`/orders/${id}`);
       return response.data;
     },
@@ -453,7 +308,7 @@ export function useCreateOrder(type: "day" | "week" | "month" = "day") {
   const { error } = useToast();
 
   return useMutation({
-    mutationFn: async (data: CreateOrderDto): Promise<Order> => {
+    mutationFn: async (data: OrderDto): Promise<Order> => {
       const response = await axiosInstance.post("/orders", data);
       return response.data;
     },
@@ -552,7 +407,7 @@ export function useOrderUpdateStatus(
   if (action === "submit" && !hasPermission("orders", "orders:" + status)) {
     return undefined;
   }
- 
+
   if (action === "cancel" && !hasPermission("orders", "orders:cancelled")) {
     return undefined;
   }

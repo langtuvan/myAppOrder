@@ -236,7 +236,10 @@ export class OrderService {
       createOrderDto.trackingNumber = await this.generateTrackingNumber(
         OrderType.DELIVERY,
       );
-      createOrderDto.status = status;
+      createOrderDto.status =
+        createOrderDto.orderExport === OrderExport.QUICK
+          ? OrderStatus.COMPLETED
+          : OrderStatus.CONFIRMED;
       createOrderDto.items = createOrderDto.items.map((item) => ({
         ...item,
         exporter:

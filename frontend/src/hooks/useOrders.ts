@@ -397,36 +397,29 @@ export function useDeleteOrder() {
 // useCompleteOrder
 export function useOrderUpdateStatus(
   status: OrderStatus,
-  action: "submit" | "cancel",
-  statusArray: OrderStatus[],
+  // // action: "submit" | "cancel",
+  // statusArray: OrderStatus[],
 ) {
   const queryClient = useQueryClient();
   const { error } = useToast();
   const { hasPermission } = usePermission();
 
-  if (action === "submit" && !hasPermission("orders", "orders:" + status)) {
-    return undefined;
-  }
-
-  if (action === "cancel" && !hasPermission("orders", "orders:cancelled")) {
+  // check status and permission
+  if (!hasPermission("orders", "orders:" + status)) {
     return undefined;
   }
 
   return useMutation({
     mutationFn: async (id: string): Promise<Order> => {
-      const endpoint =
-        action === "submit"
-          ? `/orders/${id}/${status}`
-          : `/orders/cancel/${id}/${status}`;
-      const response = await axiosInstance.patch(endpoint);
+      const response = await axiosInstance.patch(`/orders/${id}/${status}`);
       return response.data;
     },
     onSuccess: (updatedOrder) => {
       const date = updatedOrder.createdAt?.split("T")[0] as string;
       // Refresh order list
-      queryClient.invalidateQueries({
-        queryKey: orderKeys.createdAt(date, statusArray.join(",")),
-      });
+      // queryClient.invalidateQueries({
+      //   queryKey: orderKeys.createdAt(date, statusArray.join(",")),
+      // });
       // Also update detail cache
       queryClient.setQueryData(
         orderKeys.detail(updatedOrder._id as string),

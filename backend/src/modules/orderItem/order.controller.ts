@@ -246,39 +246,34 @@ export class OrderController {
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
-    // check product availability
-    // if status is Confirm Validate that all products exist and are available
-    // if status is confirm Update product stock
-    //await this.orderService.validateProductAvailabilityByInventory(order);
-
     return this.orderService.updateStatus(id, OrderStatus.CONFIRMED, user.id);
   }
 
-  // @Patch(`:id/` + OrderStatus.EXPORTED)
-  // @CheckPermission('orders', OrderStatus.EXPORTED)
-  // updateStatusExported(@Param('id') id: string, @CurrentUser() user: any) {
-  //   return this.orderService.updateStatus(id, OrderStatus.EXPORTED, user.id);
-  // }
+  @Patch(`:id/` + OrderStatus.EXPORTED)
+  @CheckPermission('orders', OrderStatus.EXPORTED)
+  updateStatusExported(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.orderService.updateStatus(id, OrderStatus.EXPORTED, user.id);
+  }
 
-  // @Patch(`:id/` + OrderStatus.DELIVERED)
-  // @CheckPermission('orders', OrderStatus.DELIVERED)
-  // async updateStatusDelivered(
-  //   @Param('id') id: string,
-  //   @CurrentUser() user: any,
-  // ) {
-  //   //  paymentStatus need to be 'paid' before setting to delivered
-  //   // find order
-  //   let order = await this.orderService.findOne(id);
-  //   if (!order) {
-  //     throw new NotFoundException(`Order with ID ${id} not found`);
-  //   }
+  @Patch(`:id/` + OrderStatus.DELIVERED)
+  @CheckPermission('orders', OrderStatus.DELIVERED)
+  async updateStatusDelivered(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    //  paymentStatus need to be 'paid' before setting to delivered
+    // find order
+    let order = await this.orderService.findOne(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
 
-  //   return this.orderService.updateStatus(id, OrderStatus.DELIVERED, user.id, {
-  //     paymentStatus: PaymentStatus.PAID,
-  //     deliveryBy: user.id,
-  //     deliveredAt: new Date(),
-  //   });
-  // }
+    return this.orderService.updateStatus(id, OrderStatus.DELIVERED, user.id, {
+      //paymentStatus: PaymentStatus.PAID,
+      deliveryBy: user.id,
+      deliveredAt: new Date(),
+    });
+  }
 
   @Patch(`:id/` + OrderStatus.COMPLETED)
   @CheckPermission('orders', OrderStatus.COMPLETED)

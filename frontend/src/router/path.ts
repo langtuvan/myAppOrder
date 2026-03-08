@@ -2,6 +2,7 @@
 // ROUTER PATHS - Booking System
 // ==============================
 
+import { update } from "lodash";
 import { i } from "motion/react-client";
 import { reset } from "numeral";
 
@@ -31,22 +32,10 @@ export const paths = {
       root: "/dashboard/orders",
       list: "/dashboard/orders",
       create: "/dashboard/orders/add",
-      edit: (id: string) => `/dashboard/orders/edit/${id}`,
+      edit: (id: string) => `/dashboard/orders/${id}/edit`,
+      updateStatus: (id: string) => `/dashboard/orders/${id}/status`,
       view: (id: string) => `/dashboard/orders/${id}`,
-      // confirm orders
-      confirmList: "/dashboard/orders/confirm",
-      confirm: (id: string) => `/dashboard/orders/confirm/${id}`,
-
-      // export orders
-      exportList: "/dashboard/orders/export",
-      export: (id: string) => `/dashboard/orders/export/${id}`,
-      // delivery orders
-      deliveryList: "/dashboard/orders/delivery",
-      delivery: (id: string) => `/dashboard/orders/delivery/${id}`,
-      // complete orders
-      completeList: "/dashboard/orders/complete",
-      complete: (id: string, searchQuery: string) =>
-        `/dashboard/orders/complete/${id}?${searchQuery}`,
+      delete: (id: string) => `/dashboard/orders/${id}/delete`,
     },
     system: {
       // User Management

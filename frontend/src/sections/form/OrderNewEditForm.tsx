@@ -31,7 +31,11 @@ import {
   PencilIcon,
 } from "@heroicons/react/24/outline";
 
-import { useCreateOrder, useUpdateOrder } from "@/hooks/useOrders";
+import {
+  useCreateOrder,
+  useOrderUpdateStatus,
+  useUpdateOrder,
+} from "@/hooks/useOrders";
 import { useRouter } from "next/navigation";
 import _, { set } from "lodash";
 import { fCurrencyVND, formatInputNumber } from "@/utils/format-number";
@@ -78,6 +82,8 @@ import {
 import { useCartStore } from "@/store/cart";
 import { uuidv7 } from "uuidv7";
 import axiosInstance from "@/utils/axios";
+import { label } from "motion/react-client";
+import { on } from "events";
 
 export interface OrderFormValuesProps extends OrderDto {}
 
@@ -85,12 +91,14 @@ type Props = {
   orderType?: OrderType;
   orderExport?: OrderExport;
   currentData?: Order;
+  changeStatus?: boolean;
 };
 
 export default function OrderNewEditForm({
   orderType = OrderType.IN_STORE,
   orderExport = OrderExport.QUICK,
   currentData = undefined,
+  changeStatus = false,
 }: Props) {
   const router = useRouter();
   const isEditing = !!currentData;
@@ -232,6 +240,10 @@ export default function OrderNewEditForm({
 
   const values = methods.watch();
 
+  useEffect(() => {
+    methods.reset();
+  }, [currentData]);
+
   const { handleSubmit, setError } = methods;
 
   const handleOnClosePrintBill = () => {
@@ -311,9 +323,11 @@ export default function OrderNewEditForm({
               className="flex flex-1 flex-col lg:col-span-2 px-0"
             >
               <div>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <ProductGridListModal />
-                </Suspense>
+                {!changeStatus && (
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <ProductGridListModal />
+                  </Suspense>
+                )}
                 <CartTableForm />
               </div>
             </BoxLabel>
@@ -323,8 +337,8 @@ export default function OrderNewEditForm({
                 isEditing={isEditing}
                 currentCus={currentData?.customer}
               />
-
               <BillingSummary isEditing={isEditing} />
+              {currentData?._id && <UpdateOrderStatus id={currentData._id} />}
             </div>
           </div>
         </Fieldset>
@@ -368,11 +382,12 @@ export default function OrderNewEditForm({
 export function CustomerInfoForm({
   isEditing,
   currentCus,
+  changeStatus = false,
 }: {
   isEditing?: boolean;
   currentCus?: Customer;
+  changeStatus?: boolean;
 }) {
-  console.log("Current customer data:", currentCus);
   const setValue = useFormContext<OrderFormValuesProps>().setValue;
   const values = useFormContext<OrderFormValuesProps>().watch();
   // customer
@@ -381,6 +396,12 @@ export function CustomerInfoForm({
   useEffect(() => {
     setValue("customer", customer?._id || "");
   }, [customer, currentCus]);
+
+  useEffect(() => {
+    if (values.customer === "") {
+      setCustomer(null);
+    }
+  }, [values.customer]);
 
   const onSetCustomer = (customerData: Customer) => {
     setCustomer(customerData);
@@ -410,21 +431,31 @@ export function CustomerInfoForm({
 
   if (isEditing) {
     return (
-      <BoxLabel label="Khách hàng">
-        <Text className="flex justify-between items-center">
-          <span>
-            Tên KH: <Strong> {currentCus?.firstName || ""}</Strong>
-          </span>
-          <Button plain onClick={onUnsetCustomer} className="text-right">
-            <XMarkIcon />
-          </Button>
-        </Text>
-        <Text>
-          Phone: <Strong> {currentCus?.phone || ""}</Strong>
-        </Text>
-        <Text>
-          Email: <Strong> {currentCus?.email || ""}</Strong>
-        </Text>
+      <BoxLabel label="Khách hàng" className="pt-6">
+        {currentCus && (
+          <>
+            <Text className="flex justify-between items-center ">
+              <span>
+                Tên KH: <Strong> {currentCus?.firstName || ""}</Strong>
+              </span>
+
+              <Button
+                plain
+                onClick={onUnsetCustomer}
+                className="text-right"
+                disabled={true}
+              >
+                <XMarkIcon />
+              </Button>
+            </Text>
+            <Text>
+              Phone: <Strong> {currentCus?.phone || ""}</Strong>
+            </Text>
+            <Text>
+              Email: <Strong> {currentCus?.email || ""}</Strong>
+            </Text>
+          </>
+        )}
 
         <DeliveryForm orderType={values.orderType} customer={currentCus} />
       </BoxLabel>
@@ -445,24 +476,26 @@ export function CustomerInfoForm({
           <PlusIcon /> Thêm Khách hàng
         </Button>
       ) : (
-        <>
-          <Text className="flex justify-between items-center">
-            <span>
-              Tên KH: <Strong> {customer?.firstName || ""}</Strong>
-            </span>
-            <Button plain onClick={onUnsetCustomer} className="text-right">
-              <XMarkIcon />
-            </Button>
-          </Text>
-          <Text>
-            Phone: <Strong> {customer?.phone || ""}</Strong>
-          </Text>
-          <Text>
-            Email: <Strong> {customer?.email || ""}</Strong>
-          </Text>
+        customer && (
+          <>
+            <Text className="flex justify-between items-center">
+              <span>
+                Tên KH: <Strong> {customer?.firstName || ""}</Strong>
+              </span>
+              <Button plain onClick={onUnsetCustomer} className="text-right">
+                <XMarkIcon />
+              </Button>
+            </Text>
+            <Text>
+              Phone: <Strong> {customer?.phone || ""}</Strong>
+            </Text>
+            <Text>
+              Email: <Strong> {customer?.email || ""}</Strong>
+            </Text>
 
-          <DeliveryForm orderType={values.orderType} customer={customer} />
-        </>
+            <DeliveryForm orderType={values.orderType} customer={customer} />
+          </>
+        )
       )}
 
       {openCustomerModal && (
@@ -656,22 +689,6 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
             {fCurrencyVND(values.billing.totalAmount)}
           </dd>
         </div>
-        {isEditing && (
-          <div className="flex items-center justify-between">
-            <dt className="text-base">Trạng thái đơn hàng </dt>
-            <dd className="text-base">
-              <Badge
-                color={
-                  StatusColor[
-                    values.status.toUpperCase() as keyof typeof StatusColor
-                  ]
-                }
-              >
-                {values.status}
-              </Badge>
-            </dd>
-          </div>
-        )}
 
         {values.orderType === OrderType.IN_STORE && (
           <>
@@ -840,7 +857,7 @@ export function DeliveryForm({
     );
   }
   return (
-    <BoxLabel label="Thông Tin giao hàng" className=" space-y-2">
+    <BoxLabel label="Thông Tin giao hàng" className="space-y-2 mt-4">
       <RHFSelectField
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.province"
@@ -900,6 +917,144 @@ export function DeliveryForm({
       )}
     </BoxLabel>
   );
+}
+
+export function UpdateOrderStatus({ id }: { id: string }) {
+  const values = useFormContext<OrderFormValuesProps>().watch();
+  const onCancelled = useOrderUpdateStatus(OrderStatus.CANCELLED);
+  const onConfirmed = useOrderUpdateStatus(OrderStatus.CONFIRMED);
+  const onExported = useOrderUpdateStatus(OrderStatus.EXPORTED);
+  const onDelivered = useOrderUpdateStatus(OrderStatus.DELIVERED);
+  const onCompleted = useOrderUpdateStatus(OrderStatus.COMPLETED);
+
+  const CancelBtn = () => {
+    if (!onCancelled) return null;
+    return (
+      <Button
+        color="red"
+        disabled={values.status === OrderStatus.CANCELLED}
+        onClick={() => {
+          // Handle status update logic here (e.g., call API to update order status)
+          onCancelled?.mutate(id);
+        }}
+      >
+        Hủy đơn hàng
+      </Button>
+    );
+  };
+
+  const ConfirmBtn = () => {
+    if (!onConfirmed) return null;
+    return (
+      <Button
+        color="indigo"
+        disabled={values.status === OrderStatus.CONFIRMED}
+        onClick={() => {
+          onConfirmed?.mutate(id);
+        }}
+      >
+        Xác nhận đơn hàng
+      </Button>
+    );
+  };
+
+  const ExportBtn = () => {
+    if (!onExported) return null;
+    return (
+      <Button
+        color="emerald"
+        disabled={values.status === OrderStatus.EXPORTED}
+        onClick={() => {
+          onExported?.mutate(id);
+        }}
+      >
+        Xuất kho
+      </Button>
+    );
+  };
+
+  const DeliveryBtn = () => {
+    if (!onDelivered) return null;
+    return (
+      <Button
+        color="purple"
+        disabled={values.status === OrderStatus.DELIVERED}
+        onClick={() => {
+          onDelivered?.mutate(id);
+        }}
+      >
+        Đã giao hàng
+      </Button>
+    );
+  };
+
+  const CompleteBtn = () => {
+    if (!onCompleted) return null;
+    return (
+      <Button
+        color="green"
+        disabled={values.status === OrderStatus.COMPLETED}
+        onClick={() => {
+          onCompleted?.mutate(id);
+        }}
+      >
+        Hoàn Tất
+      </Button>
+    );
+  };
+
+  const CurrentStatus = () => {
+    return (
+      <Text>
+        Trạng thái hiện tại:
+        <Strong>{values.status} </Strong>
+      </Text>
+    );
+  };
+
+  // render
+  if (values.orderType === OrderType.WEBSITE) {
+    return (
+      <BoxLabel
+        label="Cập nhật trạng thái đơn web"
+        className="flex flex-col  gap-2 pt-6"
+      >
+        <CurrentStatus />
+        <ConfirmBtn />
+        <CancelBtn />
+        <DeliveryBtn />
+        <CompleteBtn />
+      </BoxLabel>
+    );
+  }
+  if (values.orderType === OrderType.DELIVERY) {
+    return (
+      <BoxLabel
+        label="Cập nhật trạng thái đơn giao hàng"
+        className="flex flex-col gap-2 pt-6"
+      >
+        <CurrentStatus />
+        <ExportBtn />
+        <DeliveryBtn />
+        <CompleteBtn />
+      </BoxLabel>
+    );
+  }
+  if (
+    values.orderType === OrderType.IN_STORE &&
+    values.orderExport === OrderExport.NORMAL
+  ) {
+    return (
+      <BoxLabel
+        label="Cập nhật trạng thái đơn tại cửa hàng"
+        className="flex flex-col gap-2 pt-6"
+      >
+        <CurrentStatus />
+        <CompleteBtn />
+      </BoxLabel>
+    );
+  }
+  return null;
 }
 
 export function OrderWebNewForm({

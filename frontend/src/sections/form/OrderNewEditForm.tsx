@@ -382,11 +382,9 @@ export default function OrderNewEditForm({
 export function CustomerInfoForm({
   isEditing,
   currentCus,
-  changeStatus = false,
 }: {
   isEditing?: boolean;
   currentCus?: Customer;
-  changeStatus?: boolean;
 }) {
   const setValue = useFormContext<OrderFormValuesProps>().setValue;
   const values = useFormContext<OrderFormValuesProps>().watch();
@@ -433,7 +431,7 @@ export function CustomerInfoForm({
     return (
       <BoxLabel label="Khách hàng" className="pt-6">
         {currentCus && (
-          <>
+          <div className="mb-4">
             <Text className="flex justify-between items-center ">
               <span>
                 Tên KH: <Strong> {currentCus?.firstName || ""}</Strong>
@@ -454,7 +452,7 @@ export function CustomerInfoForm({
             <Text>
               Email: <Strong> {currentCus?.email || ""}</Strong>
             </Text>
-          </>
+          </div>
         )}
 
         <DeliveryForm orderType={values.orderType} customer={currentCus} />
@@ -478,21 +476,22 @@ export function CustomerInfoForm({
       ) : (
         customer && (
           <>
-            <Text className="flex justify-between items-center">
-              <span>
-                Tên KH: <Strong> {customer?.firstName || ""}</Strong>
-              </span>
-              <Button plain onClick={onUnsetCustomer} className="text-right">
-                <XMarkIcon />
-              </Button>
-            </Text>
-            <Text>
-              Phone: <Strong> {customer?.phone || ""}</Strong>
-            </Text>
-            <Text>
-              Email: <Strong> {customer?.email || ""}</Strong>
-            </Text>
-
+            <div className="mb-4">
+              <Text className="flex justify-between items-center">
+                <span>
+                  Tên KH: <Strong> {customer?.firstName || ""}</Strong>
+                </span>
+                <Button plain onClick={onUnsetCustomer} className="text-right">
+                  <XMarkIcon />
+                </Button>
+              </Text>
+              <Text>
+                Phone: <Strong> {customer?.phone || ""}</Strong>
+              </Text>
+              <Text>
+                Email: <Strong> {customer?.email || ""}</Strong>
+              </Text>
+            </div>
             <DeliveryForm orderType={values.orderType} customer={customer} />
           </>
         )
@@ -523,16 +522,18 @@ export function CartTableForm() {
           <TableHeader>Mặt hàng</TableHeader>
           <TableHeader>Số lượng</TableHeader>
           <TableHeader>Thành Tiền</TableHeader>
-          <TableHeader>Trạng Thái</TableHeader>
-          <TableHeader className="max-w-16" />
+
+          <TableHeader className="max-w-10" />
         </TableRow>
       </TableHead>
       <TableBody>
         {values.items.map((item: Item, idx: number) => (
           <TableRow key={item?._id}>
             <TableCell>
-              {item.productName}
-              <Strong className="ml-3">{fCurrencyVND(item.price)}</Strong>
+              <Text> {item.productName}</Text>
+              <Text>
+                <Strong>{fCurrencyVND(item.price)}</Strong>
+              </Text>
             </TableCell>
 
             <TableCell className="flex flex-row gap-2 items-center">
@@ -564,17 +565,7 @@ export function CartTableForm() {
               </Button>
             </TableCell>
             <TableCell>{fCurrencyVND(item.price * item.quantity)}</TableCell>
-            <TableCell>
-              <Badge
-                color={
-                  StatusColor[
-                    item.status.toUpperCase() as keyof typeof StatusColor
-                  ]
-                }
-              >
-                {item.status}
-              </Badge>
-            </TableCell>
+
             <TableCell>
               <Button plain onClick={() => remove(idx)}>
                 <XMarkIcon />
@@ -857,11 +848,12 @@ export function DeliveryForm({
     );
   }
   return (
-    <BoxLabel label="Thông Tin giao hàng" className="space-y-2 mt-4">
+    <BoxLabel label="Thông Tin giao hàng" className="space-y-2 ">
       <RHFSelectField
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.province"
         label="Tỉnh/Thành phố"
+        required
         options={provinceList}
       />
 
@@ -869,6 +861,7 @@ export function DeliveryForm({
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.ward"
         label="Phường/Xã"
+        required
         options={
           selectedProvince?.wards?.map((ward: any) => ({
             label: ward.name,
@@ -881,6 +874,7 @@ export function DeliveryForm({
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.address"
         label="Địa chỉ"
+        required
       />
 
       <RHFTextField
@@ -905,7 +899,7 @@ export function DeliveryForm({
 
       <RHFTextAreaField
         className="flex flex-row justify-between gap-2 items-baseline [&>*:first-child]:w-1/2"
-        name="delivery.notes"
+        name="delivery.receiptNote"
         label="ghi chú"
       />
 
@@ -1062,7 +1056,7 @@ export function OrderWebNewForm({
   orderExport = OrderExport.NORMAL,
   currentData = undefined,
 }: Props) {
-  const { items, addItem, clear } = useCartStore((s) => s);
+  const { items, clear } = useCartStore((s) => s);
 
   useEffect(() => {
     methods.setValue("items", items);
@@ -1096,7 +1090,7 @@ export function OrderWebNewForm({
       // // delivery info
       delivery: currentData?.delivery || {
         deliveryMethod: DeliveryMethod.NONE,
-        province: "",
+        province: "79",
         ward: "",
         address: "",
         receiptPhone: "",
@@ -1227,7 +1221,7 @@ export function OrderWebNewForm({
     <FormProvider
       methods={methods}
       onSubmit={methods.handleSubmit(onSubmit)}
-      //className="flex-1 flex flex-col overflow-auto"
+      className="flex-1 flex flex-col overflow-auto py-6"
     >
       <Fieldset>
         <div className="grid grid-cols-1 lg:grid-cols-3 pt-4 gap-x-4 gap-y-10 mx-auto max-w-7xl overflow-hidden ">
@@ -1243,11 +1237,7 @@ export function OrderWebNewForm({
             <DeliveryForm orderType={orderType} />
             <BillingSummary />
             <LoadingButton
-              // disabled={
-              //   methods.formState.isSubmitting ||
-              //   values.items?.length === 0 ||
-              // }
-              //onClick={handleSubmit((data) => onSubmit(data))}
+              className="px-2 md:px-0"
               isSubmitting={methods.formState.isSubmitting}
               type="submit"
             >

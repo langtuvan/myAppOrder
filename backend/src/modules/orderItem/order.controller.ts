@@ -128,25 +128,25 @@ export class OrderController {
     return this.orderService.findOne(id);
   }
 
-  // @Patch(':id')
-  // @CheckPermission('orders', 'update')
-  // @ApiOperation({ summary: 'Update an order' })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'Order ID (UUIDv7)',
-  //   example: '01HZKY7X5Q8B9J2M6N4P7R1S3T',
-  // })
-  // @ApiBody({ type: UpdateOrderDto })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Order has been successfully updated.',
-  //   type: OrderResponseDto,
-  // })
-  // @ApiResponse({ status: 404, description: 'Order not found.' })
-  // @ApiResponse({ status: 400, description: 'Bad Request.' })
-  // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-  //   return this.orderService.update(id, updateOrderDto);
-  // }
+  @Patch(':id')
+  @CheckPermission('orders', 'update')
+  @ApiOperation({ summary: 'Update an order' })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID (UUIDv7)',
+    example: '01HZKY7X5Q8B9J2M6N4P7R1S3T',
+  })
+  @ApiBody({ type: UpdateOrderDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Order has been successfully updated.',
+    type: OrderResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Order not found.' })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
+    return this.orderService.update(id, updateOrderDto);
+  }
 
   @Delete(':id')
   @CheckPermission('orders', 'delete')
@@ -170,71 +170,7 @@ export class OrderController {
     return this.orderService.remove(id);
   }
 
-  // confirm order
-  // @Patch(':id/:status/submit')
-  // @CheckPermission('orders', 'update')
-  // @ApiOperation({ summary: 'Confirm an order' })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'Order ID (UUIDv7)',
-  //   example: '01HZKY7X5Q8B9J2M6N4P7R1S3T',
-  // })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Order has been successfully confirmed.',
-  //   type: OrderResponseDto,
-  // })
-  // @ApiResponse({ status: 404, description: 'Order not found.' })
-  // @ApiResponse({
-  //   status: 400,
-  //   description: 'Cannot confirm order in current status.',
-  // })
-  // submitStatus(
-  //   @Param('id') id: string,
-  //   @Param('status') status: OrderStatus,
-  //   @CurrentUser() user: any,
-  // ) {
-  //   return this.orderService.updateStatus(id, status, user.id);
-  // }
-
-  // cancel order confirm
-  // @Patch('/cancel/:id/:status')
-  // @CheckPermission('orders', 'update')
-  // @ApiOperation({ summary: 'Cancel an order confirmation' })
-  // @ApiParam({
-  //   name: 'id',
-  //   description: 'Order ID (UUIDv7)',
-  //   example: '01HZKY7X5Q8B9J2M6N4P7R1S3T',
-  // })
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Order confirmation has been successfully cancelled.',
-  //   type: OrderResponseDto,
-  // })
-  // @ApiResponse({ status: 404, description: 'Order not found.' })
-  // @ApiResponse({
-  //   status: 400,
-  //   description: 'Cannot cancel confirmation for order in current status.',
-  // })
-  // cancelStatus(
-  //   @Param('id') id: string,
-  //   @Param('status') status: OrderStatus,
-  //   @CurrentUser() user: any,
-  // ) {
-  //   return this.orderService.cancelStatus(id, status, user.id);
-  // }
-
-  // @Patch(`:id/:` + OrderStatus.CONFIRMED)
-  // @CheckPermission('orders', OrderStatus.CONFIRMED)
-  // updateStatusConfirm(
-  //   @Param('id') id: string,
-  //   @Param('status') status: OrderStatus,
-  //   @CurrentUser() user: any,
-  // ) {
-  //   console.log('Confirming order with status:', status);
-  //   return this.orderService.updateStatus(id, status, user.id);
-  // }
-
+  // update order status
   @Patch(`:id/` + OrderStatus.CONFIRMED)
   @CheckPermission('orders', OrderStatus.CONFIRMED)
   async updateStatusConfirmed(

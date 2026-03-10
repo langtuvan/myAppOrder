@@ -186,7 +186,7 @@ export class DeliveryInfo {
   //
   @Prop({ type: String })
   receiptName?: string;
-  
+
   @Prop({ type: String })
   receiptEmail?: string;
 }
@@ -248,6 +248,9 @@ export class Order {
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   cashier?: string;
+
+  @Prop({ type: Boolean, default: false })
+  exported: boolean;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   exporter?: string;

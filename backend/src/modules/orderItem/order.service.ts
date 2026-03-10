@@ -10,6 +10,7 @@ import {
   Order,
   OrderDocument,
   OrderExport,
+  OrderItem,
   OrderStatus,
   OrderType,
   PaymentMethod,
@@ -91,56 +92,81 @@ export class OrderService {
    * Deduct stock from inventory based on requested quantity
    * Distributes the deduction across available inventories
    */
-  async deductInventoryStock(
-    productId: string,
-    quantity: number,
-    orderId: string,
-    inventories: Inventory[],
-  ): Promise<void> {
-    let remainingQuantity = quantity;
-    const inventoriesByQuantity = inventories.sort((a, b) => {
-      const aAvail = a.quantity - a.reservedQuantity;
-      const bAvail = b.quantity - b.reservedQuantity;
-      return bAvail - aAvail;
-    });
+  // async deductInventoryStock(
+  //   productId: string,
+  //   quantity: number,
+  //   orderId: string,
+  //   inventories: Inventory[],
+  // ): Promise<void> {
+  //   let remainingQuantity = quantity;
+  //   const inventoriesByQuantity = inventories.sort((a, b) => {
+  //     const aAvail = a.quantity - a.reservedQuantity;
+  //     const bAvail = b.quantity - b.reservedQuantity;
+  //     return bAvail - aAvail;
+  //   });
 
-    for (const inventory of inventoriesByQuantity) {
-      if (remainingQuantity <= 0) break;
+  //   for (const inventory of inventoriesByQuantity) {
+  //     if (remainingQuantity <= 0) break;
 
-      const availableQuantity = inventory.quantity - inventory.reservedQuantity;
-      const quantityToDeduct = Math.min(remainingQuantity, availableQuantity);
+  //     const availableQuantity = inventory.quantity - inventory.reservedQuantity;
+  //     const quantityToDeduct = Math.min(remainingQuantity, availableQuantity);
 
-      if (quantityToDeduct > 0) {
-        const beforeQuantity = inventory.quantity;
-        try {
-          // Update inventory quantity
-          // await this.inventoryService.removeStock(
-          //   inventory._id,
-          //   quantityToDeduct,
-          // );
+  //     if (quantityToDeduct > 0) {
+  //       const beforeQuantity = inventory.quantity;
+  //       try {
+  //         // Update inventory quantity
+  //         // await this.inventoryService.removeStock(
+  //         //   inventory._id,
+  //         //   quantityToDeduct,
+  //         // );
 
-          // Create transaction record
-          // await this.createInventoryTransaction(
-          //   inventory._id,
-          //   productId,
-          //   quantityToDeduct,
-          //   beforeQuantity,
-          //   orderId,
-          //   `Stock deducted for order ${orderId}`,
-          // );
+  //         // Create transaction record
+  //         // await this.createInventoryTransaction(
+  //         //   inventory._id,
+  //         //   productId,
+  //         //   quantityToDeduct,
+  //         //   beforeQuantity,
+  //         //   orderId,
+  //         //   `Stock deducted for order ${orderId}`,
+  //         // );
 
-          remainingQuantity -= quantityToDeduct;
-          this.logger.debug(
-            `Deducted ${quantityToDeduct} units from inventory ${inventory._id}`,
-          );
-        } catch (error: any) {
-          this.logger.error(
-            `Failed to deduct stock from inventory ${inventory._id}: ${error.message}`,
-          );
-          throw new BadRequestException(
-            `Failed to process inventory deduction: ${error.message}`,
-          );
-        }
+  //         remainingQuantity -= quantityToDeduct;
+  //         this.logger.debug(
+  //           `Deducted ${quantityToDeduct} units from inventory ${inventory._id}`,
+  //         );
+  //       } catch (error: any) {
+  //         this.logger.error(
+  //           `Failed to deduct stock from inventory ${inventory._id}: ${error.message}`,
+  //         );
+  //         throw new BadRequestException(
+  //           `Failed to process inventory deduction: ${error.message}`,
+  //         );
+  //       }
+  //     }
+  //   }
+  // }
+
+  async CheckInventoryStock(items: OrderItem[]): Promise<void> {
+    for (const item of items) {
+      console.log('Checking inventory for product:', item);
+      const inventoryProduct = await this.inventoryModel
+        .findOne({ product: item.product })
+        .exec();
+      if (!inventoryProduct) {
+        throw new NotFoundException(
+          `Product with ID ${item.product} not found`,
+        );
+      }
+
+      const availableQuantity = inventoryProduct.quantity - item.quantity; // Assuming reservedQuantity is not considered here
+
+      if (availableQuantity < 0) {
+        this.logger.warn(
+          `Product with ID ${item.product} is not available in inventory for quantity ${item.quantity}`,
+        );
+        throw new BadRequestException(
+          `Product with ID ${item.product} is not available in inventory for quantity ${item.quantity}`,
+        );
       }
     }
   }
@@ -263,96 +289,36 @@ export class OrderService {
         OrderType.WEBSITE,
       );
       createOrderDto.status = OrderStatus.PENDING;
-      // createOrderDto.payment.paymentMethod = PaymentMethod.CASH;
-      // createOrderDto.payment.paymentStatus = PaymentStatus.UNPAID;
-      // createOrderDto.orderExport = OrderExport.NORMAL;
-      // createOrderDto.billing.customerPay = 0;
-      // createOrderDto.billing.customerPayCod =
-      //   createOrderDto.billing.totalAmount -
-      //   (createOrderDto?.billing?.customerPay || 0);
     }
 
     try {
-      // Validate that all products exist and are available by inventory
-      const itemInventories: { [key: string]: any[] } = {};
-
-      let items = [];
-      for (const item of createOrderDto.items) {
-        // find product to get price
-        const findProduct = await this.productModel
-          .findById(item.product)
-          .exec();
-
-        const product = await this.inventoryModel
-          .findOne({ product: item.product })
-          .exec();
-        if (!product) {
-          this.logger.warn(`Product with ID ${item.product} not found`);
-          throw new NotFoundException(
-            `Product with ID ${item.product} not found`,
-          );
-        }
-        if (!product.quantity || product.quantity <= 0) {
-          this.logger.warn(`Product with ID ${item.product} is not available`);
-          throw new BadRequestException(
-            `Product with ID ${item.product} is not available`,
-          );
-        }
-
-        // Validate inventory availability and get inventories
-        // const inventories = await this.validateProductAvailabilityByInventory(
-        //   product,
-        //   item.quantity,
-        // );
-        // itemInventories[item.product] = inventories;
-      }
-
-      console.log('222');
-
-      // create issue
-      const newIssueReceipt = await this.issueReceiptService.create(
-        {
-          customer: createOrderDto?.customer,
-          note: createOrderDto.notes,
-          items: createOrderDto.items.map((item) => ({
-            product: item.product,
-            quantity: item.quantity,
-            warehouse: '',
-            price: item.price,
-          })),
-        },
-        createdBy,
-      );
-
-      console.log('333');
+      await this.CheckInventoryStock(createOrderDto.items);
 
       const order = new this.orderModel({
         ...createOrderDto,
       });
+
       const savedOrder = await order.save();
 
-      console.log('444');
-
-      // Deduct inventory stock and create transaction records
+      // new IssueReceipt
       if (createOrderDto.orderExport === OrderExport.QUICK) {
-        for (const item of createOrderDto.items) {
-          const inventories = itemInventories[item.product];
-          if (inventories) {
-            await this.deductInventoryStock(
-              item.product,
-              item.quantity,
-              savedOrder._id.toString(),
-              inventories,
-            );
-          }
-        }
+        // create issue
+        await this.issueReceiptService.create(
+          {
+            customer: createOrderDto?.customer,
+            note: createOrderDto.notes,
+            items: createOrderDto.items.map((item) => ({
+              product: item.product,
+              quantity: item.quantity,
+              warehouse: '',
+              price: item.price,
+            })),
+          },
+          createdBy,
+        );
       }
 
-      console.log('555');
-
       const createdOrder = await this.findOne(savedOrder._id);
-
-      console.log('666');
 
       // Emit real-time event for order creation
       this.orderGateway.emitOrderCreated(createdOrder);
@@ -460,61 +426,39 @@ export class OrderService {
     }
   }
 
-  // async update(id: string, data: any, userId?: string): Promise<Order> {
-  //   const updateOrderDto: any = data;
-  //   this.logger.log(`Updating order with ID: ${id}`);
-  //   try {
-  //     // If updating items, validate products again
-  //     if (updateOrderDto.items) {
-  //       for (const item of updateOrderDto.items) {
-  //         const product = await this.productModel.findById(item.product).exec();
-  //         if (!product) {
-  //           this.logger.warn(
-  //             `Product with ID ${item.product} not found during update`,
-  //           );
-  //           throw new NotFoundException(
-  //             `Product with ID ${item.product} not found`,
-  //           );
-  //         }
-  //       }
-  //     }
+  async update(id: string, data: any, userId?: string): Promise<Order> {
+    const updateOrderDto: any = data;
 
-  //     const { subTotal, totalAmount } = await this.calculateOrderTotals(
-  //       updateOrderDto as any,
-  //     );
+    try {
+      // If updating items, validate products again
+      await this.CheckInventoryStock(updateOrderDto.items);
 
-  //     const order = await this.orderModel
-  //       .findByIdAndUpdate(
-  //         id,
-  //         { ...updateOrderDto, subTotal, totalAmount },
-  //         { new: true },
-  //       )
+      const order = await this.orderModel
+        .findByIdAndUpdate(id, { ...updateOrderDto }, { new: true })
+        .exec();
 
-  //       .exec();
+      if (!order) {
+        this.logger.warn(`Order with ID ${id} not found during update`);
+        throw new NotFoundException(`Order with ID ${id} not found`);
+      }
 
-  //     if (!order) {
-  //       this.logger.warn(`Order with ID ${id} not found during update`);
-  //       throw new NotFoundException(`Order with ID ${id} not found`);
-  //     }
+      this.logger.log(`Order updated successfully: ${id}`);
+      this.orderGateway.emitOrderUpdated(order);
+      this.logger.debug(`Order update event emitted for ID: ${id}`);
 
-  //     this.logger.log(`Order updated successfully: ${id}`);
-  //     this.orderGateway.emitOrderUpdated(order);
-  //     this.logger.debug(`Order update event emitted for ID: ${id}`);
-
-  //     return order;
-  //   } catch (error) {
-
-  //     throw error;
-  //   }
-  // }
+      return order;
+    } catch (error) {
+      throw error;
+    }
+  }
 
   async updateStatus(
     id: string,
-    status: OrderStatus,
+    toStatus: OrderStatus,
     userId: string,
     update: Partial<Order> = {},
   ): Promise<Order> {
-    this.logger.log(`Updating order status to ${status} for ID: ${id}`);
+    this.logger.log(`Updating order status to ${toStatus} for ID: ${id}`);
     try {
       // find order for get items
       const order = await this.orderModel.findById(id).lean().exec();
@@ -522,25 +466,50 @@ export class OrderService {
         throw new NotFoundException(`Order with ID ${id} not found`);
       }
 
-      // // process pay cod when status is delivered
-      // if (status === OrderStatus.DELIVERED) {
-      //   update.paymentStatus = PaymentStatus.PAID;
-      //   update.deliveryBy = status === OrderStatus.DELIVERED ? userId : '';
-      //   update.deliveredAt =
-      //     status === OrderStatus.DELIVERED ? new Date() : null;
-      // }
+      // check inputStatus and  check current status
+      const { status, billing, payment } = order;
+      if (status === OrderStatus.PENDING) {
+      }
+      if (status === OrderStatus.CONFIRMED) {
+        await this.CheckInventoryStock(order.items);
+      }
 
+      if (status === OrderStatus.EXPORTED && !order.exported) {
+        //1. check availabel inventory stock before export
+        await this.CheckInventoryStock(order.items);
+        // 2. create issue receipt with status pending export, and items status pending export
+        await this.issueReceiptService.create(
+          {
+            customer: order?.customer,
+            note: order.notes,
+            items: order.items.map((item) => ({
+              product: item.product,
+              quantity: item.quantity,
+              warehouse: '',
+              price: item.price,
+            })),
+          },
+          userId,
+        );
+      }
+      if (status === OrderStatus.DELIVERED) {
+      }
+      if (status === OrderStatus.COMPLETED) {
+      }
+      if (status === OrderStatus.CANCELLED) {
+      }
+      //update issue when click Export, complete for web or delivry
       // update status and items status, set exporter and exportedAt if exported
       const updated = await this.orderModel
         .findByIdAndUpdate(
           id,
           {
-            status,
+            status: toStatus,
             items: order.items.map((item) => ({
               ...item,
-              status,
-              exporter: status === OrderStatus.EXPORTED ? userId : '', // TODO: set actual user performing the export
-              exportedAt: status === OrderStatus.EXPORTED ? new Date() : null,
+              status: toStatus,
+              exporter: toStatus === OrderStatus.EXPORTED ? userId : '', // TODO: set actual user performing the export
+              exportedAt: toStatus === OrderStatus.EXPORTED ? new Date() : null,
             })),
             ...update,
           },
@@ -553,7 +522,7 @@ export class OrderService {
         throw new NotFoundException(`Order with ID ${id} not found`);
       }
 
-      this.logger.log(`Order status updated to ${status}: ${id}`);
+      this.logger.log(`Order status updated to ${toStatus}: ${id}`);
 
       //this.orderGateway.emitOrderStatusUpdated(updated);
       console.log('emitted order status update');

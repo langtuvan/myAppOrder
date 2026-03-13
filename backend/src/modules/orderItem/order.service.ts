@@ -613,4 +613,205 @@ export class OrderService {
       throw error;
     }
   }
+
+  /**
+   * Generate orders report with revenue breakdown by order type and date range
+   */
+  async generateReport(startDate: string, endDate: string): Promise<any> {
+    try {
+      // Parse dates and validate
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const end = new Date(endDate + 'T23:59:59.999Z');
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new BadRequestException('Invalid date format. Use YYYY-MM-DD');
+      }
+
+      // Fetch all paid orders in the date range
+      const orders = await this.orderModel
+        .find({
+          createdAt: { $gte: start, $lte: end },
+          'payment.paymentStatus': PaymentStatus.PAID,
+        })
+        .lean()
+        .exec();
+
+      // Helper function to calculate order amount
+      const orderAmount = (order: any): number => {
+        const totalAmount = Number(order?.totalAmount);
+        if (!isNaN(totalAmount) && totalAmount > 0) return totalAmount;
+
+        const itemsTotal = (order?.items || []).reduce(
+          (sum: number, item: any) => {
+            const price = Number(item?.price ?? 0);
+            const qty = Number(item?.quantity ?? item?.qty ?? 1);
+            return sum + price * qty;
+          },
+          0,
+        );
+
+        const subTotal = Number(order?.billing?.subTotal ?? 0);
+        const taxes = Number(order?.billing?.taxes ?? 0);
+        const deliveryPrice = Number(order?.billing?.deliveryPrice ?? 0);
+        const discount = Number(order?.billing?.discount ?? 0);
+
+        const base = !isNaN(subTotal) && subTotal > 0 ? subTotal : itemsTotal;
+        const computed = base + taxes + deliveryPrice - discount;
+        return Math.max(0, computed);
+      };
+
+      // Helper function to normalize order type
+      const normalizeOrderType = (value: any): OrderType => {
+        const key = (value ?? OrderType.IN_STORE)
+          .toString()
+          .toLowerCase()
+          .trim();
+        if (['website', 'web', 'online'].includes(key))
+          return OrderType.WEBSITE;
+        if (['delivery', 'ship', 'shipping'].includes(key))
+          return OrderType.DELIVERY;
+        if (['in_store', 'instore', 'in-store', 'store', 'pos'].includes(key))
+          return OrderType.IN_STORE;
+        return OrderType.IN_STORE;
+      };
+
+      // Build daily buckets
+      const buckets: Record<
+        string,
+        {
+          websiteAmount: number;
+          inStoreAmount: number;
+          deliveryAmount: number;
+          websiteCount: number;
+          inStoreCount: number;
+          deliveryCount: number;
+        }
+      > = {};
+
+      // Initialize all days in range
+      const currentDate = new Date(start);
+      while (currentDate <= end) {
+        const key = currentDate.toISOString().split('T')[0];
+        buckets[key] = {
+          websiteAmount: 0,
+          inStoreAmount: 0,
+          deliveryAmount: 0,
+          websiteCount: 0,
+          inStoreCount: 0,
+          deliveryCount: 0,
+        };
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Aggregate order data
+      orders.forEach((order: any) => {
+        const orderDate = new Date(order?.createdAt);
+        const key = orderDate.toISOString().split('T')[0];
+        const amount = orderAmount(order);
+        const orderType = normalizeOrderType(order?.orderType);
+
+        if (!buckets[key]) {
+          buckets[key] = {
+            websiteAmount: 0,
+            inStoreAmount: 0,
+            deliveryAmount: 0,
+            websiteCount: 0,
+            inStoreCount: 0,
+            deliveryCount: 0,
+          };
+        }
+
+        if (orderType === OrderType.WEBSITE) {
+          buckets[key].websiteAmount += amount;
+          buckets[key].websiteCount += 1;
+        } else if (orderType === OrderType.IN_STORE) {
+          buckets[key].inStoreAmount += amount;
+          buckets[key].inStoreCount += 1;
+        } else if (orderType === OrderType.DELIVERY) {
+          buckets[key].deliveryAmount += amount;
+          buckets[key].deliveryCount += 1;
+        }
+      });
+
+      // Build chart data and summary
+      const labels: string[] = [];
+      const websiteSeries: number[] = [];
+      const inStoreSeries: number[] = [];
+      const deliverySeries: number[] = [];
+      const totals: number[] = [];
+
+      let websiteTotal = 0;
+      let inStoreTotal = 0;
+      let deliveryTotal = 0;
+      let websiteCount = 0;
+      let inStoreCount = 0;
+      let deliveryCount = 0;
+      let bestDayKey = Object.keys(buckets)[0];
+      let bestDayTotal = 0;
+
+      // Sort dates and aggregate
+      Object.keys(buckets)
+        .sort()
+        .forEach((key) => {
+          const bucket = buckets[key];
+          const dateObj = new Date(key);
+          const label = dateObj.toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+          });
+
+          labels.push(label);
+          websiteSeries.push(bucket.websiteAmount);
+          inStoreSeries.push(bucket.inStoreAmount);
+          deliverySeries.push(bucket.deliveryAmount);
+
+          const dayTotal =
+            bucket.websiteAmount + bucket.inStoreAmount + bucket.deliveryAmount;
+          totals.push(dayTotal);
+
+          websiteTotal += bucket.websiteAmount;
+          inStoreTotal += bucket.inStoreAmount;
+          deliveryTotal += bucket.deliveryAmount;
+          websiteCount += bucket.websiteCount;
+          inStoreCount += bucket.inStoreCount;
+          deliveryCount += bucket.deliveryCount;
+
+          if (dayTotal > bestDayTotal) {
+            bestDayKey = key;
+            bestDayTotal = dayTotal;
+          }
+        });
+
+      const daysCount = Object.keys(buckets).length;
+
+      return {
+        labels,
+        datasets: {
+          websiteSeries,
+          inStoreSeries,
+          deliverySeries,
+          totals,
+        },
+        summary: {
+          websiteTotal,
+          inStoreTotal,
+          deliveryTotal,
+          combined: websiteTotal + inStoreTotal + deliveryTotal,
+          websiteCount,
+          inStoreCount,
+          deliveryCount,
+          websiteAverage: daysCount > 0 ? websiteTotal / daysCount : 0,
+          inStoreAverage: daysCount > 0 ? inStoreTotal / daysCount : 0,
+          deliveryAverage: daysCount > 0 ? deliveryTotal / daysCount : 0,
+          bestDay: {
+            dateKey: bestDayKey,
+            total: bestDayTotal,
+          },
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error generating report:', error);
+      throw error;
+    }
+  }
 }

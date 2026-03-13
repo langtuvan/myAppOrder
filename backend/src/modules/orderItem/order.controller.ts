@@ -236,4 +236,36 @@ export class OrderController {
   ) {
     return this.orderService.cancelStatus(id, status, user.id);
   }
+
+  @Get('report/generate')
+  @CheckPermission('orders', 'read')
+  @ApiOperation({ summary: 'Generate orders report with revenue breakdown' })
+  @ApiQuery({
+    name: 'startDate',
+    required: true,
+    type: String,
+    description: 'Start date in YYYY-MM-DD format',
+    example: '2026-03-01',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: true,
+    type: String,
+    description: 'End date in YYYY-MM-DD format',
+    example: '2026-03-13',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Report generated successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid date format',
+  })
+  async generateReport(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.orderService.generateReport(startDate, endDate);
+  }
 }

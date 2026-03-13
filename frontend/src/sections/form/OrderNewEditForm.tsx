@@ -1,60 +1,36 @@
 "use client";
-import {
-  Suspense,
-  use,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import { Suspense, useEffect, useMemo, useState, useTransition } from "react";
 import * as Yup from "yup";
 import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
   FormProvider,
   RHFTextField,
-  RHFComboBox,
   RHFTextCurrencyField,
   RHFSelectField,
   RHFTextAreaField,
 } from "@/hooks/RectHookForm";
-import { Input as InputComponent } from "@/components/input";
 import vietNamLocation from "@/mock/provinces_and_wards_full.json";
-
-import {
-  ChevronUpIcon,
-  ChevronLeftIcon,
-  PlusIcon,
-  MinusIcon,
-  MagnifyingGlassIcon,
-  XMarkIcon,
-  PencilIcon,
-} from "@heroicons/react/24/outline";
-
+import { PlusIcon, MinusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
   useCreateOrder,
   useOrderUpdateStatus,
   useUpdateOrder,
 } from "@/hooks/useOrders";
 import { useRouter } from "next/navigation";
-import _, { set } from "lodash";
-import { fCurrencyVND, formatInputNumber } from "@/utils/format-number";
-import { Checkbox, CheckboxField } from "@/components/checkbox";
-
+import _ from "lodash";
+import { fCurrencyVND } from "@/utils/format-number";
 import { ECOMMERCE_VARIABLES } from "@/config-global";
 import { Badge } from "@/components/badge";
 import clsx from "clsx";
 import { LoadingButton, LoadingScreen } from "@/components/loading";
 import { Field, Fieldset, Label } from "@/components/fieldset";
-import UseImage from "@/hooks/useImage";
 import { ProductGridListModal } from "../list/product-list";
 import { Button } from "@/components/button";
-
 import paths from "@/router/path";
 import { Strong, Text } from "@/components/text";
 import { PrintBill } from "@/components/PrintBill";
-import { ArrowLeftIcon } from "lucide-react";
-import { Box, BoxLabel } from "@/components/box";
+import { BoxLabel } from "@/components/box";
 import {
   Table,
   TableBody,
@@ -74,16 +50,12 @@ import {
   OrderType,
   PaymentMethod,
   PaymentStatus,
-  StatusColor,
   deliveryMethods,
   OrderDto,
   paymentMethods,
 } from "@/types/order";
 import { useCartStore } from "@/store/cart";
-import { uuidv7 } from "uuidv7";
 import axiosInstance from "@/utils/axios";
-import { label } from "motion/react-client";
-import { on } from "events";
 
 export interface OrderFormValuesProps extends OrderDto {}
 
@@ -105,7 +77,6 @@ export default function OrderNewEditForm({
   // permissions & mutations
   const createMutation = useCreateOrder();
   const updateMutation = useUpdateOrder();
-
   const [showPrintBill, setShowPrintBill] = useState(false);
   const [submittedOrderData, setSubmittedOrderData] = useState<Order | null>(
     null,
@@ -597,10 +568,12 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
     billing.totalAmount = billing.subTotal - billing.discount;
 
     // delivery price adjustment
-    if (values.orderType === OrderType.DELIVERY) {
+    if (
+      values.orderType === OrderType.DELIVERY ||
+      values.orderType === OrderType.WEBSITE
+    ) {
       if (
-        billing.totalAmount >
-        ECOMMERCE_VARIABLES.freeShippingWhenSubtotalExceeds
+        billing.subTotal > ECOMMERCE_VARIABLES.freeShippingWhenSubtotalExceeds
       ) {
         // free shipping if subtotal exceeds threshold
         billing.deliveryPrice = 0;
@@ -643,13 +616,16 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
           <dd>{fCurrencyVND(values.billing.subTotal)}</dd>
         </div>
 
-        {values.orderType === OrderType.DELIVERY && (
+        {(values.orderType === OrderType.DELIVERY ||
+          values.orderType === OrderType.WEBSITE) && (
           <div className="flex items-center justify-between">
             <dt className="">Phí vận chuyển</dt>
             <dd className="space-x-2">
               <span
                 className={clsx(
-                  values.billing.subTotal > 200000 && "line-through",
+                  values.billing.subTotal >
+                    ECOMMERCE_VARIABLES.freeShippingWhenSubtotalExceeds &&
+                    "line-through",
                 )}
               >
                 {fCurrencyVND(values.billing.deliveryPrice)}
@@ -1163,9 +1139,12 @@ export function OrderWebNewForm({
         receiptEmail: Yup.string(),
       })
       .test("delivery-info-required", function (value) {
-        // If order type is delivery, then delivery info is required
+        // If order type is delivery or website, then delivery info is required
         const { orderType } = this.parent;
-        if (orderType === OrderType.DELIVERY) {
+        if (
+          orderType === OrderType.DELIVERY ||
+          orderType === OrderType.WEBSITE
+        ) {
           // Check if all required delivery fields are filled
           if (
             !value?.province ||
@@ -1176,7 +1155,8 @@ export function OrderWebNewForm({
             !value?.receiptEmail
           ) {
             return this.createError({
-              message: "Delivery information is required for delivery orders",
+              message:
+                "Delivery information is required for delivery or website orders",
             });
           }
         }

@@ -50,31 +50,31 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
           >
             {/* Header */}
             <div className="text-center border-b border-gray-300 pb-2 mb-3">
-              <h1 className="text-xl font-bold">Order Bill</h1>
-              <Text className="text-xs ">Thank you for your order!</Text>
+              <h1 className="text-xl font-bold">Hóa đơn mua hàng</h1>
+              <Text className="text-xs ">Cảm ơn quý khách!</Text>
             </div>
 
             {/* Order Info */}
             <div className="mb-3 text-xs">
               <div className="space-y-1">
                 <Text className="flex justify-between">
-                  <span>Order #:</span>
+                  <span>Mã đơn:</span>
                   <span className="font-semibold">
                     {orderData.trackingNumber || "N/A"}
                   </span>
                 </Text>
                 <Text className="flex justify-between">
-                  <span>Date:</span>
+                  <span>Ngày:</span>
                   <span className="font-semibold">
                     {new Date().toLocaleDateString()}
                   </span>
                 </Text>
                 <Text className="flex justify-between">
-                  <span>Type:</span>
+                  <span>Loại:</span>
                   <span className="font-semibold">{orderData.orderType}</span>
                 </Text>
                 <Text className="flex justify-between">
-                  <span>Payment:</span>
+                  <span>Thanh toán:</span>
                   <span className="font-semibold">
                     {orderData.payment.paymentMethod}
                   </span>
@@ -84,7 +84,7 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
 
             {/* Customer Info */}
             <div className="mb-3 border-t pt-2">
-              <h2 className="text-sm font-bold mb-1">Customer</h2>
+              <h2 className="text-sm font-bold mb-1">Khách hàng</h2>
               <div className="text-xs space-y-1">
                 <Text>{orderData.customer?.firstName}</Text>
                 <Text>{orderData.customer?.phone}</Text>
@@ -93,13 +93,13 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
 
             {/* Items Table */}
             <div className="mb-3 border-t pt-2">
-              <h2 className="text-sm font-bold mb-2">Items</h2>
+              <h2 className="text-sm font-bold mb-2">Sản phẩm</h2>
               <Table className="w-full" dense grid bleed>
                 <TableHead>
                   <TableRow className="border-b">
-                    <TableHeader className="text-left py-1">Item</TableHeader>
-                    <TableHeader className="text-center py-1">Qty</TableHeader>
-                    <TableHeader className="text-right py-1">Total</TableHeader>
+                    <TableHeader className="text-left py-1">Tên SP</TableHeader>
+                    <TableHeader className="text-center py-1">SL</TableHeader>
+                    <TableHeader className="text-right py-1">Tổng</TableHeader>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -122,7 +122,7 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
             <div className="border-t pt-2">
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span>Subtotal:</span>
+                  <span>Tạm tính:</span>
                   <span className="font-semibold">
                     {fCurrencyVND(
                       orderData.items?.reduce(
@@ -134,22 +134,15 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
                 </div>
                 {orderData.billing.deliveryPrice > 0 && (
                   <div className="flex justify-between">
-                    <span>Delivery:</span>
+                    <span>Phí giao hàng:</span>
                     <span className="font-semibold">
                       {fCurrencyVND(orderData.billing.deliveryPrice)}
                     </span>
                   </div>
                 )}
-                {/* {orderData.billing.taxes > 0 && (
-                  <div className="flex justify-between">
-                    <span>Tax:</span>
-                    <span className="font-semibold">
-                      {fCurrencyVND(orderData.taxes)}
-                    </span>
-                  </div>
-                )} */}
+
                 <div className="flex justify-between text-sm font-bold border-t pt-1 mt-1">
-                  <span>Total:</span>
+                  <span>Tổng cộng:</span>
                   <span>
                     {fCurrencyVND(orderData.billing.totalAmount || 0)}
                   </span>
@@ -157,13 +150,13 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
                 {orderData.payment.paymentMethod === PaymentMethod.CASH && (
                   <>
                     <div className="flex justify-between">
-                      <span>Paid:</span>
+                      <span>Khách đưa:</span>
                       <span className="font-semibold">
                         {fCurrencyVND(orderData.billing.customerPay || 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Change:</span>
+                      <span>Tiền thừa:</span>
                       <span className="font-semibold">
                         {fCurrencyVND(
                           (orderData.billing.customerPay || 0) -
@@ -178,18 +171,18 @@ export const PrintBill = ({ orderData, onClose }: PrintBillProps) => {
 
             {/* Footer */}
             <div className="text-center mt-3 pt-2 border-t text-xs text-gray-600">
-              <p>Thank you for your business!</p>
-              <p>Please come again</p>
+              <p>Cảm ơn quý khách đã mua hàng!</p>
+              <p>Hẹn gặp lại quý khách</p>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 justify-end border-t pt-4">
             <Button color="white" onClick={onClose}>
-              Close
+              Đóng
             </Button>
             <Button color="blue" onClick={handlePrint}>
-              Print
+              In hóa đơn
             </Button>
           </div>
         </div>

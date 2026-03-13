@@ -25,17 +25,17 @@ export default function OrderDetail({ order }: { order: Order }) {
       <div className="mx-auto max-w-3xl">
         <div className="max-w-xl">
           <h1 className="text-base font-medium text-indigo-600 dark:text-white">
-            Thank you!
+            Cảm ơn bạn!
           </h1>
           <p className="mt-2 text-4xl font-bold tracking-tight">
-            It's on the way!
+            Đơn hàng đang được xử lý!
           </p>
           <p className="mt-2 text-base text-gray-500">
-            Your order #14034056 has shipped and will be with you soon.
+            Đơn hàng của bạn đã được xác nhận và sẽ sớm giao đến bạn.
           </p>
 
           <dl className="mt-12 text-sm font-medium">
-            <dt className="">Tracking number</dt>
+            <dt className="">Mã vận đơn</dt>
             <dd className="mt-2 text-indigo-600 dark:text-white">
               {order.trackingNumber}
             </dd>
@@ -47,10 +47,10 @@ export default function OrderDetail({ order }: { order: Order }) {
           className="mt-10 border-t border-gray-200"
         >
           <h2 id="order-heading" className="sr-only">
-            Your order
+            Đơn hàng của bạn
           </h2>
 
-          <h3 className="sr-only">Items</h3>
+          <h3 className="sr-only">Sản phẩm</h3>
           {order?.items?.map((product, index) => (
             <div
               key={"order-detail-" + `${index}` + product._id}
@@ -71,11 +71,11 @@ export default function OrderDetail({ order }: { order: Order }) {
                 <div className="mt-2 flex flex-1 items-end">
                   <dl className="flex divide-x divide-gray-200 text-sm">
                     <div className="flex pr-4 sm:pr-6">
-                      <dt className="font-medium ">Quantity</dt>
+                      <dt className="font-medium ">Số lượng</dt>
                       <dd className="ml-2 ">{product.quantity}</dd>
                     </div>
                     <div className="flex pl-4 sm:pl-6">
-                      <dt className="font-medium">Price</dt>
+                      <dt className="font-medium">Giá</dt>
                       <dd className="ml-2 ">{fCurrencyVND(product.price)}</dd>
                     </div>
                   </dl>
@@ -85,12 +85,12 @@ export default function OrderDetail({ order }: { order: Order }) {
           ))}
 
           <div className="sm:ml-40 sm:pl-6">
-            <h3 className="sr-only">Your information</h3>
+            <h3 className="sr-only">Thông tin của bạn</h3>
 
-            <h4 className="sr-only">Addresses</h4>
+            <h4 className="sr-only">Địa chỉ</h4>
             <dl className="grid grid-cols-2 gap-x-6 py-10 text-sm">
               <div>
-                <dt className="font-medium ">Shipping address</dt>
+                <dt className="font-medium ">Địa chỉ giao hàng</dt>
                 <dd className="mt-2 ">
                   <address className="not-italic">
                     <span className="block">
@@ -102,7 +102,7 @@ export default function OrderDetail({ order }: { order: Order }) {
                 </dd>
               </div>
               <div>
-                <dt className="font-medium ">Billing address</dt>
+                <dt className="font-medium ">Địa chỉ thanh toán</dt>
                 <dd className="mt-2 ">
                   <address className="not-italic">
                     <span className="block">
@@ -115,10 +115,10 @@ export default function OrderDetail({ order }: { order: Order }) {
               </div>
             </dl>
 
-            <h4 className="sr-only">Payment</h4>
+            <h4 className="sr-only">Thanh toán</h4>
             <dl className="grid grid-cols-2 gap-x-6 border-t border-gray-200 py-10 text-sm">
               <div>
-                <dt className="font-medium ">Payment method</dt>
+                <dt className="font-medium ">Phương thức thanh toán</dt>
                 <dd className="mt-2 ">
                   <p>{order.payment.paymentMethod}</p>
                   <p>{order.payment.paymentStatus}</p>
@@ -130,7 +130,7 @@ export default function OrderDetail({ order }: { order: Order }) {
                 </dd>
               </div>
               <div>
-                <dt className="font-medium ">Shipping method</dt>
+                <dt className="font-medium ">Phương thức vận chuyển</dt>
                 <dd className="mt-2 ">
                   <p>{deliveryInfo?.title}</p>
                   <p>{deliveryInfo?.turnaround}</p>
@@ -138,25 +138,25 @@ export default function OrderDetail({ order }: { order: Order }) {
               </div>
             </dl>
 
-            <h3 className="sr-only">Summary</h3>
+            <h3 className="sr-only">Tóm tắt</h3>
 
             <dl className="space-y-6 border-t border-gray-200 pt-10 text-sm">
               <div className="flex justify-between">
-                <dt className="font-medium ">Subtotal</dt>
+                <dt className="font-medium ">Tạm tính</dt>
                 <dd className="">
                   {fCurrencyVND(order?.billing.subTotal || 0)}
                 </dd>
               </div>
 
               <div className="flex justify-between">
-                <dt className="font-medium ">Shipping</dt>
+                <dt className="font-medium ">Phí giao hàng</dt>
                 <dd className="">
                   {fCurrencyVND(order?.billing.deliveryPrice)}
                 </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="flex font-medium ">
-                  Discount
+                  Giảm giá
                   {/* <span className="ml-2 rounded-full bg-gray-200 px-2 py-0.5 text-xs ">
                     STUDENT50
                   </span> */}
@@ -167,7 +167,7 @@ export default function OrderDetail({ order }: { order: Order }) {
               </div>
 
               <div className="flex justify-between">
-                <dt className="font-medium ">Total</dt>
+                <dt className="font-medium ">Tổng cộng</dt>
                 <dd className="">
                   {fCurrencyVND(order?.billing.totalAmount || 0)}
                 </dd>
@@ -176,12 +176,12 @@ export default function OrderDetail({ order }: { order: Order }) {
           </div>
           <div className="my-6 text-center text-sm text-gray-500">
             <p>
-              or{" "}
+              hoặc{" "}
               <Link
                 href="/"
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
               >
-                Continue Shopping
+                Tiếp tục mua sắm
                 <span aria-hidden="true"> &rarr;</span>
               </Link>
             </p>

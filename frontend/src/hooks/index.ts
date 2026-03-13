@@ -4,6 +4,7 @@
 
 export { useAuth } from "./useAuth";
 export { usePermission } from "./usePermission";
+export { useOrderReports } from "./useOrderReports";
 // export { useReceptionSocket } from "./useReceptionSocket";
 
 export { useToast } from "../contexts/toast-context";

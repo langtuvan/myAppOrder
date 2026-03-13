@@ -165,22 +165,12 @@ export default function OrderDetail({ order }: { order: Order }) {
                   {fCurrencyVND(order?.billing.discount || 0)}
                 </dd>
               </div>
-              <div className="flex justify-between">
-                <dt className="flex font-medium ">
-                  Taxes
-                  {/* <span className="ml-2 rounded-full bg-gray-200 text-gray-600 px-2 py-0.5 text-xs ">
-                    {order?.taxes * 100}%
-                  </span> */}
-                </dt>
-                <dd className="">
-                  {fCurrencyVND(
-                    ((order?.billing.subTotal ?? 0) as number) || 0,
-                  )}
-                </dd>
-              </div>
+
               <div className="flex justify-between">
                 <dt className="font-medium ">Total</dt>
-                <dd className="">{fCurrencyVND(order?.billing.totalAmount || 0)}</dd>
+                <dd className="">
+                  {fCurrencyVND(order?.billing.totalAmount || 0)}
+                </dd>
               </div>
             </dl>
           </div>

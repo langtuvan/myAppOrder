@@ -62,26 +62,6 @@ const navItems = [
         url: "/dashboard/orders",
         action: "orders:update",
       },
-      {
-        label: "Order Confirm",
-        url: "/dashboard/orders/confirm",
-        action: "orders:" + OrderStatus.CONFIRMED,
-      },
-      {
-        label: "Order Export",
-        url: "/dashboard/orders/export",
-        action: "orders:" + OrderStatus.EXPORTED,
-      },
-      {
-        label: "Order Delivery",
-        url: "/dashboard/orders/delivery",
-        action: "orders:" + OrderStatus.DELIVERED,
-      },
-      {
-        label: "Order Complete",
-        url: "/dashboard/orders/complete",
-        action: "orders:" + OrderStatus.COMPLETED,
-      },
     ],
   },
   {

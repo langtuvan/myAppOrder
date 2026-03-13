@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/user.dto';
+import { CreateUserDto, ChangePasswordDto } from './dto/user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { PaginationDto, PaginatedResponse } from './dto/pagination.dto';
 import { UserDocument } from './schemas/user.schema';
@@ -151,10 +151,27 @@ export class UserController {
     return toUserResponse(user);
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Soft delete user' })
-  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @Patch(':id/change-password')
+  //@CheckPermission('users', 'update')
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiResponse({
+    status: 200,
+    description: 'User password changed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Current password is incorrect' })
   @ApiResponse({ status: 404, description: 'User not found' })
+  async changePassword(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<UserResponseDto> {
+    const user = await this.userService.changePassword(
+      id,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    );
+    return toUserResponse(user);
+  }
+
   async remove(
     @Param('id', ParseObjectIdPipe) id: string,
   ): Promise<UserResponseDto> {

@@ -13,6 +13,7 @@ import { Button } from "@/components/button";
 import { useUpdateUser } from "@/hooks/useUsers";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { ModalLayout } from "@/components/modal";
+import axiosInstance from "@/utils/axios";
 
 type FormValuesPropsChangePassword = {
   oldPassword: string;
@@ -61,12 +62,10 @@ export function UserChangePasswordForm({ currentData }: Props) {
   const onSubmit = async (data: FormValuesPropsChangePassword) => {
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate async operation
     try {
-      isEditing &&
-        currentData?._id &&
-        (await updateMutation?.mutateAsync({
-          id: currentData._id,
-          data: { password: data.newPassword },
-        }));
+      await axiosInstance.patch(`/users/${currentData._id}/change-password`, {
+        currentPassword: data.oldPassword,
+        newPassword: data.newPassword,
+      });
 
       router.back();
     } catch (errors: any) {

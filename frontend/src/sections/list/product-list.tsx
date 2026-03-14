@@ -58,6 +58,7 @@ import {
   DialogBody,
   DialogTitle,
 } from "@/components/dialog";
+import { fetchCategories, fetchProducts } from "@/actions/fetchData";
 
 type ColumnVisibilityState = Record<keyof Product, boolean>;
 
@@ -586,15 +587,32 @@ export function ProductGridListMain({
   products: Product[];
   categories: Category[];
 }) {
-  "use client";
+  // fet Product and Category when if server side not run
+  const [productsData, setProductsData] = useState<Product[]>(products || []);
+  const [categoriesData, setCategoriesData] = useState<Category[]>(
+    categories || [],
+  );
+  useEffect(() => {
+    if (products.length === 0) {
+      fetchProducts()
+        .then((data) => setProductsData(data as Product[]))
+        .catch((err) => console.error("Failed to fetch products:", err));
+    }
+    if (categories.length === 0) {
+      fetchCategories()
+        .then((data) => setCategoriesData(data as Category[]))
+        .catch((err) => console.error("Failed to fetch categories:", err));
+    }
+  }, [products, categories]);
   // query
   const [query, setQuery] = useState("");
   const cart = useCartStore((state) => state.items);
-  const filteredProducts = products.filter(
+  const filteredProducts = productsData.filter(
     (product) =>
       product.name.toLowerCase().includes(query.toLowerCase()) ||
       paramCase(product.name).includes(paramCase(query)),
   );
+
   return (
     <>
       {/* Filters */}
@@ -632,8 +650,8 @@ export function ProductGridListMain({
         </h2>
 
         <div>
-          {categories?.length > 0 &&
-            categories.map((category) => (
+          {categoriesData?.length > 0 &&
+            categoriesData.map((category) => (
               <Fragment key={category._id}>
                 <p className="my-4 mt-12 pl-3 md:pl-0 text-xl font-sans ">
                   {category.name}

@@ -4,10 +4,13 @@ import { fetchCategories, fetchProducts } from "@/actions/fetchData";
 import paths from "@/router/path";
 
 export default async function HomePage() {
+  // it not work with suspense, because of the server component, so we need to fetch data here and pass it to the component
   const [products = [], categories = []] = await Promise.all([
     await fetchProducts(),
     await fetchCategories(),
   ]);
+
+  
 
   return (
     <main className="relative pb-24">

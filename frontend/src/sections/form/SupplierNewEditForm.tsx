@@ -16,15 +16,12 @@ import {
 import { useEffect, useMemo } from "react";
 import { Fieldset } from "@/components/fieldset";
 import { useRouter } from "next/navigation";
-
 import _ from "lodash";
 import { LoadingButton } from "@/components/loading";
-import { Warehouse, CreateWarehouseDto } from "@/types/warehouse";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
 import formattedMessage from "@/language/language";
 import { CreateSupplierDto, Supplier } from "@/types/supplier";
-import { em } from "motion/react-client";
 import { ModalLayout } from "@/components/modal";
 
 interface FormValuesProps extends CreateSupplierDto {}

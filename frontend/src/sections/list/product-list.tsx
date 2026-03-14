@@ -607,11 +607,11 @@ export function ProductGridListMain({
   // query
   const [query, setQuery] = useState("");
   const cart = useCartStore((state) => state.items);
-  const filteredProducts = productsData.filter(
+  const filteredProducts = productsData?.filter(
     (product) =>
       product.name.toLowerCase().includes(query.toLowerCase()) ||
       paramCase(product.name).includes(paramCase(query)),
-  );
+  ) || [];
 
   return (
     <>

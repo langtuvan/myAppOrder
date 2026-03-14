@@ -764,6 +764,10 @@ export function DeliveryForm({
   orderType: OrderType;
   customer?: Customer;
 }) {
+  const {
+    formState: { errors },
+  } = useFormContext();
+  console.log("delivery form errors", errors);
   const values = useFormContext<OrderFormValuesProps>().watch();
   const setValue = useFormContext<OrderFormValuesProps>().setValue;
   // provinces
@@ -816,6 +820,17 @@ export function DeliveryForm({
     });
   };
 
+  const wardList = useMemo(() => {
+    if (!selectedProvince) return [];
+    return [
+      { label: "Chọn phường/xã", value: "" },
+      ...selectedProvince.wards.map((ward: any) => ({
+        label: ward.name,
+        value: ward.code,
+      })),
+    ];
+  }, [selectedProvince]);
+
   if (values.orderType === OrderType.IN_STORE) {
     return (
       <Button onClick={onSetDelivery} color="teal">
@@ -838,12 +853,7 @@ export function DeliveryForm({
         name="delivery.ward"
         label="Phường/Xã"
         required
-        options={
-          selectedProvince?.wards?.map((ward: any) => ({
-            label: ward.name,
-            value: ward.code,
-          })) ?? []
-        }
+        options={wardList}
       />
 
       <RHFTextField
@@ -1161,6 +1171,7 @@ export function OrderWebNewForm({
             return this.createError({
               message:
                 "Delivery information is required for delivery or website orders",
+              path: "delivery.ward", // Set the error path to the delivery field
             });
           }
         }

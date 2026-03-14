@@ -59,6 +59,7 @@ import {
   DialogTitle,
 } from "@/components/dialog";
 import { fetchCategories, fetchProducts } from "@/actions/fetchData";
+import axiosInstance from "@/utils/axios";
 
 type ColumnVisibilityState = Record<keyof Product, boolean>;
 
@@ -594,13 +595,13 @@ export function ProductGridListMain({
   );
   useEffect(() => {
     if (products.length === 0) {
-      fetchProducts()
-        .then((data) => setProductsData(data as Product[]))
+      axiosInstance.get("/products")
+        .then((response) => setProductsData(response.data as Product[]))
         .catch((err) => console.error("Failed to fetch products:", err));
     }
     if (categories.length === 0) {
-      fetchCategories()
-        .then((data) => setCategoriesData(data as Category[]))
+      axiosInstance.get("/categories")
+        .then((response) => setCategoriesData(response.data as Category[]))
         .catch((err) => console.error("Failed to fetch categories:", err));
     }
   }, [products, categories]);

@@ -36,6 +36,7 @@ import { GoodsReceiptItemsModule } from './modules/goods_receipt_items/goods-rec
 import { IssueReceiptsModule } from './modules/issue_receipts/issue-receipts.module';
 import { IssueReceiptItemsModule } from './modules/issue_receipt_items/issue-receipt-items.module';
 import { SupplierModule } from './modules/supplier/supplier.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -47,14 +48,14 @@ import { SupplierModule } from './modules/supplier/supplier.module';
     ScheduleModule.forRoot(),
     // Serve static files
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, 'client'),
+      rootPath: join(__dirname, '..', '..', 'client'),
       exclude: ['/api*'],
       serveRoot: '/',
     }),
     // Serve uploaded files (không yêu cầu authentication)
     // ...existing code...
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'upload'), // Đổi từ 'uploads' thành 'upload'
+      rootPath: join(__dirname, '..', '..', 'upload'), // Đổi từ 'uploads' thành 'upload'
       serveRoot: '/upload', // Đổi từ '/uploads' thành '/upload'
       exclude: ['/api*'],
       serveStaticOptions: {
@@ -103,7 +104,7 @@ import { SupplierModule } from './modules/supplier/supplier.module';
     LoggerModule,
     // Database seeding (last)
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,

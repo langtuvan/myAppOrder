@@ -24,9 +24,9 @@ async function bootstrap() {
     prefix: '/upload',
   });
 
-  app.useStaticAssets('client', {
-    prefix: '/',
-  });
+  // app.useStaticAssets('client', {
+  //   prefix: '/',
+  // });
 
   // Enable CORS
   app.enableCors(corsOptions);
@@ -34,7 +34,9 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // Set global prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['/'],
+  });
 
   // Apply locale interceptor globally
   //app.useGlobalInterceptors(new LocaleInterceptor());

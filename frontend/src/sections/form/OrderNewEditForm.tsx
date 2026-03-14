@@ -841,7 +841,7 @@ export function DeliveryForm({
   return (
     <BoxLabel label="Thông Tin giao hàng" className="space-y-2 ">
       <RHFSelectField
-        className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
+        className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2 "
         name="delivery.province"
         label="Tỉnh/Thành phố"
         required

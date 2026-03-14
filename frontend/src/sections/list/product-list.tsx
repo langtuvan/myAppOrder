@@ -595,12 +595,14 @@ export function ProductGridListMain({
   );
   useEffect(() => {
     if (products.length === 0) {
-      axiosInstance.get("/products")
+      axiosInstance
+        .get("/products")
         .then((response) => setProductsData(response.data as Product[]))
         .catch((err) => console.error("Failed to fetch products:", err));
     }
     if (categories.length === 0) {
-      axiosInstance.get("/categories")
+      axiosInstance
+        .get("/categories")
         .then((response) => setCategoriesData(response.data as Category[]))
         .catch((err) => console.error("Failed to fetch categories:", err));
     }
@@ -614,10 +616,6 @@ export function ProductGridListMain({
         product.name.toLowerCase().includes(query.toLowerCase()) ||
         paramCase(product.name).includes(paramCase(query)),
     ) || [];
-
-  console.log("products", products);
-  console.log("categories", categories);
-  console.log("filteredProducts", filteredProducts);
 
   return (
     <>
@@ -659,7 +657,7 @@ export function ProductGridListMain({
           {categoriesData?.length > 0 &&
             categoriesData.map((category) => (
               <Fragment key={category._id}>
-                <p className="my-4 mt-12 pl-3 md:pl-0 text-xl font-sans ">
+                <p className="my-4 mt-12 pl-3 md:pl-0 text-xl font-bold text-gray-900 dark:text-white ">
                   {category.name}
                 </p>
                 <div className="-mx-px grid grid-cols-2 border-l border-gray-200 sm:mx-0 md:grid-cols-4 lg:grid-cols-5">

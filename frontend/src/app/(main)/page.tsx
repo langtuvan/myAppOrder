@@ -2,33 +2,33 @@ import Link from "next/link";
 import { ProductGridListMain } from "@/sections/list/product-list";
 import { fetchCategories, fetchProducts } from "@/actions/fetchData";
 import paths from "@/router/path";
+import { Button } from "@/components/button";
 
 export default async function HomePage() {
-  // it not work with suspense, because of the server component, so we need to fetch data here and pass it to the component
+  // ssr fetch data
   const [products = [], categories = []] = await Promise.all([
     await fetchProducts(),
     await fetchCategories(),
   ]);
 
-  
-
   return (
     <main className="relative pb-24">
-      <div className="px-4 py-16 text-center sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold tracking-tight ">Booking Coffee</h1>
-        <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
-          Welcome to Booking Coffee, your go-to destination for premium coffee
-          beans and accessories. Explore our wide selection and find your
-          perfect brew today!
-        </p>
-        <p>
-          <Link href={paths.dashboard.root} >
-            App Login
-          </Link>
-        </p>
-      </div>
-
+      <HeroSection />
       <ProductGridListMain products={products} categories={categories} />
     </main>
+  );
+}
+
+function HeroSection() {
+  return (
+    <div className="px-4 py-16 text-center sm:px-6 lg:px-8">
+      <h1 className="text-4xl font-bold tracking-tight ">Booking Coffee</h1>
+      <p className="mx-auto mt-4 max-w-xl text-base text-gray-500">
+        Welcome to Booking Coffee, your go-to destination for premium coffee
+        beans and accessories. Explore our wide selection and find your perfect
+        brew today!
+      </p>
+      <Button href={paths.dashboard.root}>App Login</Button>
+    </div>
   );
 }

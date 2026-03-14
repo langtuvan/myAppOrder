@@ -851,6 +851,7 @@ export function DeliveryForm({
         name="delivery.address"
         label="Địa chỉ"
         required
+        autoComplete="address"
       />
 
       <RHFTextField
@@ -858,6 +859,7 @@ export function DeliveryForm({
         name="delivery.receiptName"
         label="Tên người nhận"
         required
+        autoComplete="name"
       />
 
       <RHFTextField
@@ -865,12 +867,14 @@ export function DeliveryForm({
         name="delivery.receiptPhone"
         label="SĐT người nhận"
         required
+        autoComplete="tel"
       />
 
       <RHFTextField
         className="flex flex-row justify-between gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.receiptEmail"
         label="Email người nhận"
+        autoComplete="email"
       />
 
       <RHFTextAreaField
@@ -1223,6 +1227,7 @@ export function OrderWebNewForm({
             >
               Thanh Toán
             </LoadingButton>
+            <Button href={"/"}>Thêm mặt hàng</Button>
           </div>
         </div>
       </Fieldset>

@@ -1,0 +1,1 @@
+export {default} from "@/app/(admin)/dashboard/inventory/suppliers/[id]/edit/page";

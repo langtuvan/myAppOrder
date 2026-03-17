@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Ability, AbilityBuilder, AbilityClass } from '@casl/ability';
-import { UserDocument } from '../modules/user/schemas/user.schema';
+import { UserDocument } from '../booking-coffee/user/schemas/user.schema';
 
 export type AppAbility = Ability<[string, string]>;
 

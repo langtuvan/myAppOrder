@@ -4,38 +4,37 @@ import { APP_GUARD, APP_INTERCEPTOR, RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { CategoryModule } from './modules/category/category.module';
-import { ProductModule } from './modules/product/product.module';
-import { OrderModule } from './modules/orderItem/order.module';
-import { UserModule } from './modules/user/user.module';
-import { RoleModule } from './modules/role/role.module';
-import { PermissionModule } from './modules/permission/permission.module';
-import { ModuleModule } from './modules/module/module.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { DatabaseModule } from './modules/database/database.module';
-import { CustomerModule } from './modules/customer/customer.module';
-import { FacultyModule } from './modules/faculty/faculty.module';
-import { ExamModule } from './modules/exam/exam.module';
-import { LoggerModule } from './modules/logger/logger.module';
-import { ProductServiceModule } from './modules/product-service/product-service.module';
-import { ReceptionModule } from './modules/reception/reception.module';
-import { RoomModule } from './modules/room/room.module';
-import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
+import { CategoryModule } from './booking-coffee/category/category.module';
+import { ProductModule } from './booking-coffee/product/product.module';
+import { OrderModule } from './booking-coffee/orderItem/order.module';
+import { UserModule } from './booking-coffee/user/user.module';
+import { RoleModule } from './booking-coffee/role/role.module';
+import { PermissionModule } from './booking-coffee/permission/permission.module';
+import { ModuleModule } from './booking-coffee/module/module.module';
+import { AuthModule } from './booking-coffee/auth/auth.module';
+import { DatabaseModule } from './booking-coffee/database/database.module';
+import { CustomerModule } from './booking-coffee/customer/customer.module';
+import { FacultyModule } from './booking-hospital/faculty/faculty.module';
+
+import { LoggerModule } from './logger/logger.module';
+import { ProductServiceModule } from './booking-coffee/product-service/product-service.module';
+import { RoomModule } from './booking-coffee/room/room.module';
+import { JwtAuthGuard } from './booking-coffee/auth/jwt-auth.guard';
 import { CaslModule, CaslGuard } from './casl';
 import { mongooseConfig } from './config/mongoose.config';
 import { MongooseErrorInterceptor } from './interceptor/mongooseErrorInterceptor';
-import { ItemModule } from './modules/item/item.module';
-import { AmenitiesModule } from './modules/amenities/amenities.module';
-import { BookingModule } from './modules/booking/booking.module';
-import { HealthModule } from './modules/health/health.module';
-import { WarehousesModule } from './modules/warehouses/warehouses.module';
-import { InventoryModule } from './modules/inventory/inventory.module';
-import { InventoryTransactionsModule } from './modules/inventory_transactions/inventory_transactions.module';
-import { GoodsReceiptsModule } from './modules/goods_receipts/goods-receipts.module';
-import { GoodsReceiptItemsModule } from './modules/goods_receipt_items/goods-receipt-items.module';
-import { IssueReceiptsModule } from './modules/issue_receipts/issue-receipts.module';
-import { IssueReceiptItemsModule } from './modules/issue_receipt_items/issue-receipt-items.module';
-import { SupplierModule } from './modules/supplier/supplier.module';
+import { ItemModule } from './booking-coffee/item/item.module';
+import { AmenitiesModule } from './booking-hospital/amenities/amenities.module';
+
+import { HealthModule } from './health/health.module';
+import { WarehousesModule } from './booking-coffee/warehouses/warehouses.module';
+import { InventoryModule } from './booking-coffee/inventory/inventory.module';
+import { InventoryTransactionsModule } from './booking-coffee/inventory_transactions/inventory_transactions.module';
+import { GoodsReceiptsModule } from './booking-coffee/goods_receipts/goods-receipts.module';
+import { GoodsReceiptItemsModule } from './booking-coffee/goods_receipt_items/goods-receipt-items.module';
+import { IssueReceiptsModule } from './booking-coffee/issue_receipts/issue-receipts.module';
+import { IssueReceiptItemsModule } from './booking-coffee/issue_receipt_items/issue-receipt-items.module';
+import { SupplierModule } from './booking-coffee/supplier/supplier.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -73,7 +72,7 @@ import { AppController } from './app.controller';
     DatabaseModule,
     // Authorization - CASL for role-based access control
     CaslModule,
-    // Feature modules (in dependency order)
+    // Feature modules (in dependency Booking-Coffee)
     ModuleModule,
     PermissionModule,
     RoleModule,
@@ -85,13 +84,6 @@ import { AppController } from './app.controller';
     OrderModule,
     CustomerModule,
     ItemModule,
-    FacultyModule,
-    ExamModule,
-    ReceptionModule,
-    RoomModule,
-    AmenitiesModule,
-    BookingModule,
-    HealthModule,
     WarehousesModule,
     InventoryModule,
     InventoryTransactionsModule,
@@ -101,8 +93,42 @@ import { AppController } from './app.controller';
     IssueReceiptItemsModule,
     SupplierModule,
 
+    // Feature modules (in dependency Booking-Hospital)
+    FacultyModule,
+    RoomModule,
+    AmenitiesModule,
+    HealthModule,
+
     LoggerModule,
     // Database seeding (last)
+    RouterModule.register([
+      {
+        path: 'booking-coffee',
+        children: [
+          { path: 'auth', module: AuthModule },
+          { path: 'users', module: UserModule },
+          { path: 'roles', module: RoleModule },
+          { path: 'permissions', module: PermissionModule },
+          { path: 'modules', module: ModuleModule },
+          { path: 'categories', module: CategoryModule },
+          { path: 'products', module: ProductModule },
+          { path: 'orders', module: OrderModule },
+          { path: 'customers', module: CustomerModule },
+          { path: 'items', module: ItemModule },
+          { path: 'warehouses', module: WarehousesModule },
+          { path: 'inventories', module: InventoryModule },
+          {
+            path: 'inventory-transactions',
+            module: InventoryTransactionsModule,
+          },
+          { path: 'goods-receipts', module: GoodsReceiptsModule },
+          { path: 'goods-receipt-items', module: GoodsReceiptItemsModule },
+          { path: 'issue-receipts', module: IssueReceiptsModule },
+          { path: 'issue-receipt-items', module: IssueReceiptItemsModule },
+          { path: 'suppliers', module: SupplierModule },
+        ],
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [

@@ -145,6 +145,8 @@ export interface Order {
   // timestamps
   createdAt?: string;
   updatedAt?: string;
+  //
+  exported?: boolean;
 }
 
 export interface OrderDto extends Omit<Order, "customer"> {

@@ -219,6 +219,7 @@ export class OrderService {
         createOrderDto.checker = createdBy;
         createOrderDto.cashier = createdBy;
         createOrderDto.exporter = createdBy;
+        createOrderDto.exported = true;
         // status completed and paymentStatus paid
         createOrderDto.status = OrderStatus.COMPLETED;
         // items status completed, exporter and exportedAt
@@ -333,26 +334,41 @@ export class OrderService {
   }
 
   //findAll optional by from-to date range
-  async findAll(
-    fromDate?: string,
-    toDate?: string,
-    status?: string,
-  ): Promise<Order[]> {
-    const statusArray = status ? status.split(',') : [];
+  async findAll(fromDate?: string, toDate?: string): Promise<Order[]> {
     try {
-      const query: any = {
-        ...(statusArray.length > 0 ? { status: { $in: statusArray } } : {}),
-      };
+      let query: any = {};
+
+      // Filter out literal "undefined" or "null" strings that might come from query params
+      const validFromDate =
+        fromDate && fromDate !== 'undefined' && fromDate !== 'null'
+          ? fromDate
+          : null;
+      const validToDate =
+        toDate && toDate !== 'undefined' && toDate !== 'null' ? toDate : null;
+
       // Add date range filter if provided
-      if (fromDate || toDate) {
+      if (validFromDate || validToDate) {
         query.createdAt = {};
-        if (fromDate) {
-          query.createdAt.$gte = new Date(fromDate + 'T00:00:00.000Z');
-          this.logger.debug(`Filter from date: ${fromDate}`);
+
+        if (validFromDate) {
+          const parsedFromDate = new Date(validFromDate + 'T00:00:00.000Z');
+          if (!isNaN(parsedFromDate.getTime())) {
+            query.createdAt.$gte = parsedFromDate;
+            this.logger.debug(`Filter from date: ${validFromDate}`);
+          }
         }
-        if (toDate) {
-          query.createdAt.$lte = new Date(toDate + 'T23:59:59.999Z');
-          this.logger.debug(`Filter to date: ${toDate}`);
+
+        if (validToDate) {
+          const parsedToDate = new Date(validToDate + 'T23:59:59.999Z');
+          if (!isNaN(parsedToDate.getTime())) {
+            query.createdAt.$lte = parsedToDate;
+            this.logger.debug(`Filter to date: ${validToDate}`);
+          }
+        }
+
+        // Clean up empty createdAt object if both dates were invalid
+        if (Object.keys(query.createdAt).length === 0) {
+          delete query.createdAt;
         }
       }
 
@@ -360,7 +376,6 @@ export class OrderService {
         .find(query)
         .sort({ createdAt: -1 })
         .exec();
-      this.logger.debug(`Retrieved ${orders.length} orders`);
       return orders;
     } catch (error) {
       throw error;
@@ -452,54 +467,45 @@ export class OrderService {
     }
   }
 
+
   async updateStatus(
     id: string,
     toStatus: OrderStatus,
     userId: string,
     update: Partial<Order> = {},
   ): Promise<Order> {
-    this.logger.log(`Updating order status to ${toStatus} for ID: ${id}`);
+    const order = await this.orderModel.findById(id).lean().exec();
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    if (toStatus === OrderStatus.EXPORTED) {
+      // create issue receipt with status pending export, and items status pending export
+      await this.issueReceiptService.create(
+        {
+          customer: order?.customer,
+          note: order.notes,
+          items: order.items.map((item) => ({
+            product: item.product,
+            quantity: item.quantity,
+            warehouse: '',
+            price: item.price,
+          })),
+        },
+        userId,
+      );
+      update.exported = true;
+    }
+
+    if (toStatus === OrderStatus.COMPLETED) {
+      update.payment = {
+        ...update.payment,
+        paymentStatus: PaymentStatus.PAID,
+      };
+    
+    }
+
     try {
-      // find order for get items
-      const order = await this.orderModel.findById(id).lean().exec();
-      if (!order) {
-        throw new NotFoundException(`Order with ID ${id} not found`);
-      }
-
-      // check inputStatus and  check current status
-      const { status, billing, payment } = order;
-      if (status === OrderStatus.PENDING) {
-      }
-      if (status === OrderStatus.CONFIRMED) {
-        await this.CheckInventoryStock(order.items);
-      }
-
-      if (status === OrderStatus.EXPORTED && !order.exported) {
-        //1. check availabel inventory stock before export
-        await this.CheckInventoryStock(order.items);
-        // 2. create issue receipt with status pending export, and items status pending export
-        await this.issueReceiptService.create(
-          {
-            customer: order?.customer,
-            note: order.notes,
-            items: order.items.map((item) => ({
-              product: item.product,
-              quantity: item.quantity,
-              warehouse: '',
-              price: item.price,
-            })),
-          },
-          userId,
-        );
-      }
-      if (status === OrderStatus.DELIVERED) {
-      }
-      if (status === OrderStatus.COMPLETED) {
-      }
-      if (status === OrderStatus.CANCELLED) {
-      }
-      //update issue when click Export, complete for web or delivry
-      // update status and items status, set exporter and exportedAt if exported
       const updated = await this.orderModel
         .findByIdAndUpdate(
           id,
@@ -522,11 +528,8 @@ export class OrderService {
         throw new NotFoundException(`Order with ID ${id} not found`);
       }
 
-      this.logger.log(`Order status updated to ${toStatus}: ${id}`);
-
       //this.orderGateway.emitOrderStatusUpdated(updated);
-      console.log('emitted order status update');
-      this.logger.debug(`Order status update event emitted for ID: ${id}`);
+      this.orderGateway.emitOrderUpdated(updated);
 
       return updated;
     } catch (error) {

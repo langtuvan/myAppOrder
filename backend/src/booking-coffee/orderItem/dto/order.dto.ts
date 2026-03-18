@@ -8,6 +8,7 @@ import {
   ValidateNested,
   Min,
   IsNotEmpty,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
@@ -166,7 +167,6 @@ export class DeliveryInfoDto {
   @IsString()
   receiptNote?: string;
 
-
   @ApiProperty({
     description: 'Name of the recipient',
     example: 'John Doe',
@@ -187,7 +187,6 @@ export class DeliveryInfoDto {
 }
 
 export class CreateOrderDto {
-
   @ApiProperty({
     description: 'Tracking number for the order',
     example: 'TRK123456789',
@@ -269,6 +268,10 @@ export class CreateOrderDto {
   @ValidateNested()
   @Type(() => DeliveryInfoDto)
   delivery?: DeliveryInfoDto;
+
+  @IsOptional()
+  @IsBoolean()
+  exported?: boolean;
 }
 
 export class UpdateOrderDto extends PartialType(CreateOrderDto) {}

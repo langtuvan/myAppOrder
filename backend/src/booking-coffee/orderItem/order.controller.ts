@@ -10,6 +10,7 @@ import {
   HttpCode,
   Query,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -56,9 +57,9 @@ export class OrderController {
   findByCreatedAt(
     @Query('start') start: string,
     @Query('end') end: string,
-    @Query('status') status: string,
+    //@Query('status') status: string,
   ) {
-    return this.orderService.findAll(start, end, status);
+    return this.orderService.findAll(start, end);
   }
 
   @Post()
@@ -177,17 +178,43 @@ export class OrderController {
     @Param('id') id: string,
     @CurrentUser() user: any,
   ) {
-    // find order
+    // find order and check status is pending before allowing to update to confirmed
     let order = await this.orderService.findOne(id);
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
+    //1. check if order status is pending before allowing to update to confirmed
+    await this.assertTransition(
+      order?.status as any,
+      OrderStatus.CONFIRMED,
+      id,
+    );
+    //2. check availabel inventory stock before export
+    await this.orderService.CheckInventoryStock(order.items);
+
     return this.orderService.updateStatus(id, OrderStatus.CONFIRMED, user.id);
   }
 
   @Patch(`:id/` + OrderStatus.EXPORTED)
   @CheckPermission('orders', OrderStatus.EXPORTED)
-  updateStatusExported(@Param('id') id: string, @CurrentUser() user: any) {
+  async updateStatusExported(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    // find order and check if order status is confirmed before allowing to update to exported
+    const order = await this.orderService.findOne(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    await this.assertTransition(order?.status as any, OrderStatus.EXPORTED, id);
+    if (order.exported) {
+      throw new BadRequestException(
+        `Order with ID ${id} has already been exported, cannot update to delivered`,
+      );
+    }
+    //1. check availabel inventory stock before export
+    await this.orderService.CheckInventoryStock(order.items);
+
     return this.orderService.updateStatus(id, OrderStatus.EXPORTED, user.id);
   }
 
@@ -197,12 +224,16 @@ export class OrderController {
     @Param('id') id: string,
     @CurrentUser() user: any,
   ) {
-    //  paymentStatus need to be 'paid' before setting to delivered
-    // find order
+    // find order and check if order status is exported before allowing to update to delivered
     let order = await this.orderService.findOne(id);
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
+    await this.assertTransition(
+      order?.status as any,
+      OrderStatus.DELIVERED,
+      id,
+    );
 
     return this.orderService.updateStatus(id, OrderStatus.DELIVERED, user.id, {
       //paymentStatus: PaymentStatus.PAID,
@@ -213,28 +244,64 @@ export class OrderController {
 
   @Patch(`:id/` + OrderStatus.COMPLETED)
   @CheckPermission('orders', OrderStatus.COMPLETED)
-  updateStatusCompleted(@Param('id') id: string, @CurrentUser() user: any) {
+  async updateStatusCompleted(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    // find order and check if order status is delivered before allowing to update to completed
+    let order = await this.orderService.findOne(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    await this.assertTransition(
+      order?.status as any,
+      OrderStatus.COMPLETED,
+      id,
+    );
+    if (!order.exported) {
+      throw new BadRequestException(
+        `Order with ID ${id} has not been exported, cannot update to completed`,
+      );
+    }
     return this.orderService.updateStatus(id, OrderStatus.COMPLETED, user.id);
   }
 
-  // @Patch(':id/:status')
-  // @CheckPermission('orders', 'status')
-  // updateStatus(
-  //   @Param('id') id: string,
-  //   @Param('status') status: OrderStatus,
-  //   @CurrentUser() user: any,
-  // ) {
-  //   return this.orderService.updateStatus(id, status, user.id);
-  // }
-
-  @Patch('/cancel/:id/:status')
+  @Patch(`:id/` + OrderStatus.CANCELLED)
   @CheckPermission('orders', 'cancel')
-  cancelOrder(
+  async cancelOrder(
     @Param('id') id: string,
     @Param('status') status: OrderStatus,
     @CurrentUser() user: any,
   ) {
+    // find order and check if order status is pending or confirmed before allowing to cancel
+    let order = await this.orderService.findOne(id);
+    await this.assertTransition(
+      order?.status as any,
+      OrderStatus.CANCELLED,
+      id,
+    );
     return this.orderService.cancelStatus(id, status, user.id);
+  }
+
+  private async assertTransition(
+    current: OrderStatus,
+    next: OrderStatus,
+    id: string,
+  ) {
+    const allowed: any = {
+      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.EXPORTED, OrderStatus.CANCELLED],
+      [OrderStatus.EXPORTED]: [OrderStatus.DELIVERED],
+      [OrderStatus.DELIVERED]: [OrderStatus.COMPLETED],
+      [OrderStatus.COMPLETED]: [],
+      [OrderStatus.CANCELLED]: [],
+    };
+
+    if (!allowed[current]?.includes(next)) {
+      throw new BadRequestException(
+        `Order with ID ${id} cannot be changed from ${current} to ${next}`,
+      );
+    }
   }
 
   @Get('report/generate')

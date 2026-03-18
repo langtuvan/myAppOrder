@@ -24,8 +24,7 @@ export const orderKeys = {
     [...orderKeys.lists(), filters] as const,
   details: () => [...orderKeys.all, "detail"] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
-  createdAt: (date: string, byStatus: string) =>
-    [...orderKeys.all, "createdAt", date, byStatus] as const,
+  createdAt: (date: string) => [...orderKeys.all, "createdAt", date] as const,
   week: (weekStart: string) => [...orderKeys.all, "week", weekStart] as const,
   byPhone: (phone: string) => [...orderKeys.all, "phone", phone] as const,
 };
@@ -305,7 +304,7 @@ export function useOrder(id: string, enabled = true) {
 // Mutation Hooks
 export function useCreateOrder(type: "day" | "week" | "month" = "day") {
   const queryClient = useQueryClient();
-  const { error } = useToast();
+  const { error, success } = useToast();
 
   return useMutation({
     mutationFn: async (data: OrderDto): Promise<Order> => {
@@ -314,7 +313,7 @@ export function useCreateOrder(type: "day" | "week" | "month" = "day") {
     },
     onSuccess: (newOrder) => {
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
-
+      success("Order Created", "The order has been created successfully.");
       if (type === "day") {
         queryClient.setQueryData(
           orderKeys.detail(newOrder?._id as string),
@@ -324,7 +323,6 @@ export function useCreateOrder(type: "day" | "week" | "month" = "day") {
       queryClient.invalidateQueries({
         queryKey: orderKeys.createdAt(
           newOrder.createdAt?.split("T")[0] as string,
-          "",
         ),
       });
     },
@@ -358,11 +356,11 @@ export function useUpdateOrder(type: "day" | "week" | "month" = "day") {
           updatedOrder,
         );
       }
-      // queryClient.invalidateQueries({
-      //   queryKey: orderKeys.createdAt(
-      //     updatedOrder.createdAt?.split("T")[0] as string,
-      //   ),
-      // });
+      queryClient.invalidateQueries({
+        queryKey: orderKeys.createdAt(
+          updatedOrder.createdAt?.split("T")[0] as string,
+        ),
+      });
       queryClient.setQueryData(
         orderKeys.detail(updatedOrder._id as string),
         updatedOrder,
@@ -395,13 +393,9 @@ export function useDeleteOrder() {
 }
 // actions
 // useCompleteOrder
-export function useOrderUpdateStatus(
-  status: OrderStatus,
-  // // action: "submit" | "cancel",
-  // statusArray: OrderStatus[],
-) {
+export function useOrderUpdateStatus(status: OrderStatus) {
   const queryClient = useQueryClient();
-  const { error } = useToast();
+  const { error, success } = useToast();
   const { hasPermission } = usePermission();
 
   // check status and permission
@@ -415,26 +409,20 @@ export function useOrderUpdateStatus(
       return response.data;
     },
     onSuccess: (updatedOrder) => {
-      const date = updatedOrder.createdAt?.split("T")[0] as string;
       // Refresh order list
-      // queryClient.invalidateQueries({
-      //   queryKey: orderKeys.createdAt(date, statusArray.join(",")),
-      // });
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      if (updatedOrder.createdAt) {
+        queryClient.invalidateQueries({
+          queryKey: orderKeys.createdAt(updatedOrder.createdAt.split("T")[0]),
+        });
+      }
+
       // Also update detail cache
       queryClient.setQueryData(
         orderKeys.detail(updatedOrder._id as string),
         updatedOrder,
       );
-      // update createdAt cache
-      // refresh day cache (status filters)
-      // if (updatedOrder.createdAt) {
-      //   queryClient.invalidateQueries({
-      //     queryKey: orderKeys.createdAt(
-      //       updatedOrder.createdAt.split("T")[0],
-      //       ExportStatusOptions.join(","),
-      //     ),
-      //   });
-      // }
+      success("Update Status", "The order has been updated successfully.");
     },
     onError: (err: any) => {
       if (Array.isArray(err?.message)) return;
@@ -443,13 +431,7 @@ export function useOrderUpdateStatus(
   });
 }
 
-export function useOrderList({
-  statusOptions,
-  defaultStatus,
-}: {
-  statusOptions: OrderStatus[];
-  defaultStatus: OrderStatus;
-}) {
+export function useOrderList({}: {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { events } = useOrderSocket();
@@ -463,20 +445,12 @@ export function useOrderList({
     router.replace(`${window.location.pathname}?${searchParams.toString()}`);
   };
 
-  // search param status
-  const currentStatus = useSearchParams().get("status") || defaultStatus;
-  const setCurrentStatus = (status: string) => {
-    const searchParams = new URLSearchParams(window.location.search);
-    searchParams.set("status", status);
-    router.replace(`${window.location.pathname}?${searchParams.toString()}`);
-  };
-
   // Handle real-time order events
   useEffect(() => {
     if (events.length === 0) return;
     const lastEvent = events[0];
     const eventData = lastEvent.data as Order;
-    const queryKey = orderKeys.createdAt(selectedDate, statusOptions.join(","));
+    const queryKey = orderKeys.createdAt(selectedDate);
 
     // Check if event is for the current date
     const eventDate = eventData.createdAt?.split("T")[0];
@@ -532,13 +506,13 @@ export function useOrderList({
         queryKey: orderKeys.detail(eventData._id as string),
       });
     }
-  }, [events, queryClient, selectedDate, status]);
+  }, [events, queryClient, selectedDate]);
 
   const query = useQuery({
-    queryKey: orderKeys.createdAt(selectedDate, statusOptions.join(",")),
+    queryKey: orderKeys.createdAt(selectedDate),
     queryFn: async (): Promise<Order[]> => {
       const response = await axiosInstance.get(
-        `/orders/createdAt?start=${selectedDate}&end=${selectedDate}&status=${statusOptions.join(",")}`,
+        `/orders/createdAt?start=${selectedDate}&end=${selectedDate}}`,
       );
       return response.data;
     },
@@ -548,18 +522,14 @@ export function useOrderList({
   //const { data } = useOrdersByCreatedAt(selectedDate, statusOptions);
   const data = query.data || [];
 
-  const dataFiltered =
-    currentStatus === "all"
-      ? data
-      : data?.filter((order) => order.status === currentStatus);
+  const dataFiltered = data;
 
   return {
     query,
     router,
     selectedDate,
     setSelectedDate,
-    currentStatus,
-    setCurrentStatus,
+
     dataFiltered,
   };
 }

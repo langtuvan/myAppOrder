@@ -118,6 +118,7 @@ export default function OrderNewEditForm({
         receiptEmail: "",
         receiptNote: "",
       },
+      exported: currentData?.exported || false,
     }),
     [currentData],
   );
@@ -767,7 +768,6 @@ export function DeliveryForm({
   const {
     formState: { errors },
   } = useFormContext();
-  console.log("delivery form errors", errors);
   const values = useFormContext<OrderFormValuesProps>().watch();
   const setValue = useFormContext<OrderFormValuesProps>().setValue;
   // provinces
@@ -904,87 +904,128 @@ export function DeliveryForm({
 }
 
 export function UpdateOrderStatus({ id }: { id: string }) {
-  const values = useFormContext<OrderFormValuesProps>().watch();
+  const methods = useFormContext<OrderFormValuesProps>();
+  const {
+    watch,
+    handleSubmit,
+    resetField,
+    setValue,
+    formState: { isSubmitting },
+  } = methods;
+  const values = watch();
+
   const onCancelled = useOrderUpdateStatus(OrderStatus.CANCELLED);
   const onConfirmed = useOrderUpdateStatus(OrderStatus.CONFIRMED);
   const onExported = useOrderUpdateStatus(OrderStatus.EXPORTED);
   const onDelivered = useOrderUpdateStatus(OrderStatus.DELIVERED);
   const onCompleted = useOrderUpdateStatus(OrderStatus.COMPLETED);
+  const router = useRouter();
+  const exported = values.exported;
+
+  const mutations: any = {
+    [OrderStatus.CANCELLED]: onCancelled,
+    [OrderStatus.CONFIRMED]: onConfirmed,
+    [OrderStatus.EXPORTED]: onExported,
+    [OrderStatus.DELIVERED]: onDelivered,
+    [OrderStatus.COMPLETED]: onCompleted,
+  };
+
+  const onSubmit = async (data: OrderFormValuesProps, action: OrderStatus) => {
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate async operation
+    try {
+      const result = await mutations[action]?.mutateAsync(id);
+      console.log("Update status result:", result);
+    } catch (error) {}
+  };
 
   const CancelBtn = () => {
     if (!onCancelled) return null;
-    return (
-      <Button
-        color="red"
-        disabled={values.status === OrderStatus.CANCELLED}
-        onClick={() => {
-          // Handle status update logic here (e.g., call API to update order status)
-          onCancelled?.mutate(id);
-        }}
-      >
-        Hủy đơn hàng
-      </Button>
-    );
+    if (values.status === OrderStatus.PENDING) {
+      return (
+        <LoadingButton
+          color="red"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.CANCELLED))()
+          }
+        >
+          Hủy đơn hàng
+        </LoadingButton>
+      );
+    }
+    return null;
   };
 
   const ConfirmBtn = () => {
     if (!onConfirmed) return null;
-    return (
-      <Button
-        color="indigo"
-        disabled={values.status === OrderStatus.CONFIRMED}
-        onClick={() => {
-          onConfirmed?.mutate(id);
-        }}
-      >
-        Xác nhận đơn hàng
-      </Button>
-    );
+    if (values.status === OrderStatus.PENDING) {
+      return (
+        <LoadingButton
+          color="indigo"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.CONFIRMED))()
+          }
+        >
+          Xác nhận đơn hàng
+        </LoadingButton>
+      );
+    }
+    return null;
   };
 
   const ExportBtn = () => {
     if (!onExported) return null;
-    return (
-      <Button
-        color="emerald"
-        disabled={values.status === OrderStatus.EXPORTED}
-        onClick={() => {
-          onExported?.mutate(id);
-        }}
-      >
-        Xuất kho
-      </Button>
-    );
+    if (values.status === OrderStatus.CONFIRMED) {
+      return (
+        <LoadingButton
+          color="emerald"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.EXPORTED))()
+          }
+        >
+          Xuất kho
+        </LoadingButton>
+      );
+    }
+    return null;
   };
 
   const DeliveryBtn = () => {
     if (!onDelivered) return null;
-    return (
-      <Button
-        color="purple"
-        disabled={values.status === OrderStatus.DELIVERED}
-        onClick={() => {
-          onDelivered?.mutate(id);
-        }}
-      >
-        Đã giao hàng
-      </Button>
-    );
+    if (values.status === OrderStatus.EXPORTED) {
+      return (
+        <LoadingButton
+          color="purple"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.DELIVERED))()
+          }
+        >
+          Giao hàng
+        </LoadingButton>
+      );
+    }
+    return null;
   };
 
   const CompleteBtn = () => {
     if (!onCompleted) return null;
-    return (
-      <Button
-        color="green"
-        disabled={values.status === OrderStatus.COMPLETED}
-        onClick={() => {
-          onCompleted?.mutate(id);
-        }}
-      >
-        Hoàn Tất
-      </Button>
-    );
+    if (values.status === OrderStatus.DELIVERED) {
+      return (
+        <LoadingButton
+          color="green"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.COMPLETED))()
+          }
+        >
+          Hoàn Tất
+        </LoadingButton>
+      );
+    }
+    return null;
   };
 
   const CurrentStatus = () => {
@@ -1006,6 +1047,7 @@ export function UpdateOrderStatus({ id }: { id: string }) {
         <CurrentStatus />
         <ConfirmBtn />
         <CancelBtn />
+        <ExportBtn />
         <DeliveryBtn />
         <CompleteBtn />
       </BoxLabel>

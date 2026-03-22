@@ -13,6 +13,7 @@ import {
 import vietNamLocation from "@/mock/provinces_and_wards_full.json";
 import { PlusIcon, MinusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import {
+  useCancelExportedOrder,
   useCreateOrder,
   useOrderUpdateStatus,
   useUpdateOrder,
@@ -910,15 +911,21 @@ export function UpdateOrderStatus({ id }: { id: string }) {
     handleSubmit,
     resetField,
     setValue,
-    formState: { isSubmitting },
+    reset,
+    formState: { isSubmitting, errors },
   } = methods;
   const values = watch();
+  console.log(
+    "🚀 ~ file: OrderNewEditForm.tsx:439 ~ UpdateOrderStatus ~ errors:",
+    errors,
+  );
 
   const onCancelled = useOrderUpdateStatus(OrderStatus.CANCELLED);
   const onConfirmed = useOrderUpdateStatus(OrderStatus.CONFIRMED);
   const onExported = useOrderUpdateStatus(OrderStatus.EXPORTED);
   const onDelivered = useOrderUpdateStatus(OrderStatus.DELIVERED);
   const onCompleted = useOrderUpdateStatus(OrderStatus.COMPLETED);
+  const onCancelExported = useCancelExportedOrder();
   const router = useRouter();
   const exported = values.exported;
 
@@ -928,13 +935,14 @@ export function UpdateOrderStatus({ id }: { id: string }) {
     [OrderStatus.EXPORTED]: onExported,
     [OrderStatus.DELIVERED]: onDelivered,
     [OrderStatus.COMPLETED]: onCompleted,
+    ['cancel-exported']: onCancelExported,
   };
 
-  const onSubmit = async (data: OrderFormValuesProps, action: OrderStatus) => {
+  const onSubmit = async (data: OrderFormValuesProps, action: any) => {
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate async operation
     try {
-      const result = await mutations[action]?.mutateAsync(id);
-      console.log("Update status result:", result);
+      const { _id, result } = await mutations[action]?.mutateAsync(id);
+      reset({ ...result });
     } catch (error) {}
   };
 
@@ -950,6 +958,19 @@ export function UpdateOrderStatus({ id }: { id: string }) {
           }
         >
           Hủy đơn hàng
+        </LoadingButton>
+      );
+    }
+    if (values.status === OrderStatus.CANCELLED) {
+      return (
+        <LoadingButton
+          color="yellow"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.PENDING))()
+          }
+        >
+          Khôi phục đơn hàng
         </LoadingButton>
       );
     }
@@ -971,6 +992,19 @@ export function UpdateOrderStatus({ id }: { id: string }) {
         </LoadingButton>
       );
     }
+    if (values.status === OrderStatus.CONFIRMED) {
+      return (
+        <LoadingButton
+          color="yellow"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.PENDING))()
+          }
+        >
+          Hủy xác nhận
+        </LoadingButton>
+      );
+    }
     return null;
   };
 
@@ -979,6 +1013,7 @@ export function UpdateOrderStatus({ id }: { id: string }) {
     if (values.status === OrderStatus.CONFIRMED) {
       return (
         <LoadingButton
+          disabled={exported}
           color="emerald"
           isSubmitting={isSubmitting}
           onClick={() =>
@@ -986,6 +1021,19 @@ export function UpdateOrderStatus({ id }: { id: string }) {
           }
         >
           Xuất kho
+        </LoadingButton>
+      );
+    }
+    if (values.status === OrderStatus.EXPORTED) {
+      return (
+        <LoadingButton
+          color="yellow"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, "cancel-exported"))()
+          }
+        >
+          Hủy xuất kho
         </LoadingButton>
       );
     }
@@ -1007,6 +1055,19 @@ export function UpdateOrderStatus({ id }: { id: string }) {
         </LoadingButton>
       );
     }
+    if (values.status === OrderStatus.DELIVERED) {
+      return (
+        <LoadingButton
+          color="yellow"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.EXPORTED))()
+          }
+        >
+          Hủy giao hàng
+        </LoadingButton>
+      );
+    }
     return null;
   };
 
@@ -1022,6 +1083,19 @@ export function UpdateOrderStatus({ id }: { id: string }) {
           }
         >
           Hoàn Tất
+        </LoadingButton>
+      );
+    }
+    if (values.status === OrderStatus.COMPLETED) {
+      return (
+        <LoadingButton
+          color="red"
+          isSubmitting={isSubmitting}
+          onClick={() =>
+            handleSubmit((data) => onSubmit(data, OrderStatus.DELIVERED))()
+          }
+        >
+          Hủy Hoàn Tất
         </LoadingButton>
       );
     }

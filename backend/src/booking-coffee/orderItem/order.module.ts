@@ -9,20 +9,12 @@ import { UserModule } from '../user/user.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { InventoryTransactionsModule } from '../inventory_transactions/inventory_transactions.module';
 import {
-  IssueReceiptItem,
-  IssueReceiptItemSchema,
-} from '../issue_receipt_items';
-import {
   Inventory,
   InventorySchema,
 } from '../inventory/schemas/inventory.schema';
-import {
-  IssueReceipt,
-  IssueReceiptSchema,
-  IssueReceiptsModule,
-  IssueReceiptsService,
-} from '../issue_receipts';
+import { IssueReceiptsModule } from '../issue_receipts';
 import { CustomerModule } from '../customer/customer.module';
+import { GoodsReceiptsModule } from '../goods_receipts';
 
 @Module({
   imports: [
@@ -35,9 +27,11 @@ import { CustomerModule } from '../customer/customer.module';
     ]),
     forwardRef(() => CustomerModule),
     forwardRef(() => UserModule),
+    forwardRef(() => IssueReceiptsModule),
+    forwardRef(() => GoodsReceiptsModule),
 
     //InventoryModule,
-    IssueReceiptsModule,
+    //IssueReceiptsModule,
   ],
   controllers: [OrderController],
   providers: [OrderService, OrderGateway],

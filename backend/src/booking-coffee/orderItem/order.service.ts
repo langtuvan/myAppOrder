@@ -33,6 +33,8 @@ import {
   IssueReceiptsService,
   IssueReceiptStatus,
 } from '../issue_receipts';
+import { GoodsReceiptItemsService } from '../goods_receipt_items';
+import { GoodsReceiptsService } from '../goods_receipts';
 
 @Injectable()
 export class OrderService {
@@ -45,6 +47,7 @@ export class OrderService {
     private inventoryModel: Model<InventoryDocument>,
     private orderGateway: OrderGateway,
     private issueReceiptService: IssueReceiptsService,
+    private goodsReceiptsService: GoodsReceiptsService,
   ) {}
 
   /**
@@ -467,7 +470,6 @@ export class OrderService {
     }
   }
 
-
   async updateStatus(
     id: string,
     toStatus: OrderStatus,
@@ -479,7 +481,7 @@ export class OrderService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
-    if (toStatus === OrderStatus.EXPORTED) {
+    if (toStatus === OrderStatus.EXPORTED && !order.exported) {
       // create issue receipt with status pending export, and items status pending export
       await this.issueReceiptService.create(
         {
@@ -499,10 +501,9 @@ export class OrderService {
 
     if (toStatus === OrderStatus.COMPLETED) {
       update.payment = {
-        ...update.payment,
+        ...order.payment,
         paymentStatus: PaymentStatus.PAID,
       };
-    
     }
 
     try {
@@ -535,6 +536,42 @@ export class OrderService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async cancelExportedOrder(id: string, userId: string): Promise<Order> {
+    const order = await this.orderModel.findById(id).lean().exec();
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    if (!order.exported || order.status !== OrderStatus.EXPORTED) {
+      throw new BadRequestException(
+        `Order with ID ${id} is not in exported state`,
+      );
+    }
+
+    if (!order.items?.length) {
+      throw new BadRequestException(
+        `Order with ID ${id} has no items to return to inventory`,
+      );
+    }
+
+    // Reverse the previous outbound deduction by creating an inbound goods receipt.
+    await this.goodsReceiptsService.create(
+      {
+        note: `Return inventory from cancel exported order ${id}`,
+        items: order.items.map((item) => ({
+          product: item.product,
+          quantity: item.quantity,
+          warehouse: '6985998184dc862b3ffa7352',
+          price: item.price,
+        })),
+      },
+      userId,
+    );
+
+    return this.updateStatus(id, OrderStatus.CONFIRMED, userId, {
+      exported: false,
+    });
   }
 
   // cancel order confirm

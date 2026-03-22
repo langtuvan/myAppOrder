@@ -431,6 +431,44 @@ export function useOrderUpdateStatus(status: OrderStatus) {
   });
 }
 
+export function useCancelExportedOrder() {
+  const queryClient = useQueryClient();
+  const { error, success } = useToast();
+  const { hasPermission } = usePermission();
+
+  // if (!hasPermission("orders", "orders:cancel-exported")) {
+  //   return undefined;
+  // }
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<Order> => {
+      const response = await axiosInstance.patch(
+        `/orders/${id}/cancel-exported`,
+      );
+      return response.data;
+    },
+    onSuccess: (updatedOrder) => {
+      // Refresh order list
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      if (updatedOrder.createdAt) {
+        queryClient.invalidateQueries({
+          queryKey: orderKeys.createdAt(updatedOrder.createdAt.split("T")[0]),
+        });
+      }
+      // Also update detail cache
+      queryClient.setQueryData(
+        orderKeys.detail(updatedOrder._id as string),
+        updatedOrder,
+      );
+      success("Cancel Exported", "The order has been cancelled successfully.");
+    },
+    onError: (err: any) => {
+      if (Array.isArray(err?.message)) return;
+      error("Error", err?.message || "An error occurred.");
+    },
+  });
+}
+
 export function useOrderList({}: {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -442,6 +480,14 @@ export function useOrderList({}: {}) {
   const setSelectedDate = (date: string) => {
     const searchParams = new URLSearchParams(window.location.search);
     searchParams.set("date", date);
+    router.replace(`${window.location.pathname}?${searchParams.toString()}`);
+  };
+
+  //search param status
+  const currentStatus = useSearchParams().get("status") || OrderStatus.PENDING;
+  const setCurrentStatus = (status: string) => {
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("status", status);
     router.replace(`${window.location.pathname}?${searchParams.toString()}`);
   };
 
@@ -529,8 +575,11 @@ export function useOrderList({}: {}) {
     router,
     selectedDate,
     setSelectedDate,
-
-    dataFiltered,
+    currentStatus,
+    setCurrentStatus,
+    dataFiltered: dataFiltered.filter((order) =>
+      currentStatus === OrderStatus.All ? true : order.status === currentStatus,
+    ),
   };
 }
 

@@ -183,6 +183,13 @@ export class OrderController {
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
+    // check if order status is exported, if yes, cannot update to confirmed
+    if (order.exported) {
+      throw new BadRequestException(
+        `Order with ID ${id} has already been exported, cannot update to confirmed`,
+      );
+    }
+
     //1. check if order status is pending before allowing to update to confirmed
     await this.assertTransition(
       order?.status as any,
@@ -207,15 +214,34 @@ export class OrderController {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
     await this.assertTransition(order?.status as any, OrderStatus.EXPORTED, id);
-    if (order.exported) {
-      throw new BadRequestException(
-        `Order with ID ${id} has already been exported, cannot update to delivered`,
-      );
-    }
+    // if (order.exported) {
+    //   throw new BadRequestException(
+    //     `Order with ID ${id} has already been exported, cannot update to delivered`,
+    //   );
+    // }
     //1. check availabel inventory stock before export
     await this.orderService.CheckInventoryStock(order.items);
 
     return this.orderService.updateStatus(id, OrderStatus.EXPORTED, user.id);
+  }
+
+  // cancel export and return to confirmed status, only allow if order is in exported status and not yet delivered
+  @Patch(`:id/` + 'cancel-exported')
+  @CheckPermission('orders', OrderStatus.EXPORTED)
+  async cancelExport(@Param('id') id: string, @CurrentUser() user: any) {
+    // find order and check if order status is exported before allowing to cancel export
+    const order = await this.orderService.findOne(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+    await this.assertTransition(order?.status as any, OrderStatus.EXPORTED, id);
+    if (!order.exported) {
+      throw new BadRequestException(
+        `Order with ID ${id} has not been exported, cannot cancel export`,
+      );
+    }
+
+    return this.orderService.cancelExportedOrder(id, user.id);
   }
 
   @Patch(`:id/` + OrderStatus.DELIVERED)
@@ -290,10 +316,10 @@ export class OrderController {
   ) {
     const allowed: any = {
       [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-      [OrderStatus.CONFIRMED]: [OrderStatus.EXPORTED, OrderStatus.CANCELLED],
-      [OrderStatus.EXPORTED]: [OrderStatus.DELIVERED],
-      [OrderStatus.DELIVERED]: [OrderStatus.COMPLETED],
-      [OrderStatus.COMPLETED]: [],
+      [OrderStatus.CONFIRMED]: [OrderStatus.EXPORTED, OrderStatus.PENDING],
+      [OrderStatus.EXPORTED]: [OrderStatus.DELIVERED, OrderStatus.EXPORTED],
+      [OrderStatus.DELIVERED]: [OrderStatus.COMPLETED, OrderStatus.EXPORTED],
+      [OrderStatus.COMPLETED]: [OrderStatus.DELIVERED],
       [OrderStatus.CANCELLED]: [],
     };
 

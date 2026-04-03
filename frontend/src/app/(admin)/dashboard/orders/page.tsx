@@ -9,6 +9,8 @@ import { Radio } from "@/components/radio";
 import * as Headless from "@headlessui/react";
 import { Select } from "@/components/select";
 import { OrderStatus } from "@/types/order";
+import { useLanguageStore } from "@/store/language";
+import { getDictionary, useDictionary } from "@/dictionaries/locale";
 
 const statusOptions = [...Object.values(OrderStatus)];
 export default function ProductPage() {
@@ -25,13 +27,15 @@ export default function ProductPage() {
     dataFiltered,
   } = useOrderList({ statusOptions, defaultStatus: OrderStatus.PENDING });
 
+  const formattedMessage = useDictionary();
+
   return (
     <>
       <div className="flex w-full flex-wrap items-end justify-between gap-4 border-b border-zinc-950/10 pb-6 dark:border-white/10">
-        <Heading>Order List</Heading>
+        <Heading>{formattedMessage.admin.order.orderList}</Heading>
         <div className="flex gap-4">
           <Button href={paths.dashboard.orders.create} plain>
-            Add New
+            {formattedMessage.admin.order.addOrder} aaa
           </Button>
         </div>
       </div>

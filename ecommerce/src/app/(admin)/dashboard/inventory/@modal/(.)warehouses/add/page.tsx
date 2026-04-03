@@ -1,1 +1,0 @@
-export {default} from "@/app/(admin)/dashboard/inventory/warehouses/add/page";

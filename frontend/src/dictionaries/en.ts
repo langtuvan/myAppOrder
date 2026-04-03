@@ -23,6 +23,10 @@ type Language = {
   welcome: string;
   admin: {
     navigation: any;
+    order: {
+      orderList: string;
+      addOrder: string;
+    }
     inventory: {
       name: string;
       navigation: any;
@@ -99,6 +103,10 @@ export const en: Language = {
       order: "Order",
       inventory: "Inventory",
       system: "System",
+    },
+    order: {
+      orderList: "Order List",
+      addOrder: "Add Order",
     },
     inventory: {
       name: "Inventory Management",

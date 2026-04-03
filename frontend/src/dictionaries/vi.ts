@@ -20,6 +20,10 @@ export const vi: typeof en = {
       report: "Báo Cáo",
       order: "Đơn Hàng",
     },
+    order: {
+      orderList: "Danh Sách Đơn Hàng",
+      addOrder: "Thêm Đơn Hàng",
+    },
     inventory: {
       name: "Quản Lý Tồn Kho",
       navigation: {

@@ -44,7 +44,9 @@ import { DropDownToggleTheme } from "@/components/ThemeToggle";
 
 import { useMemo } from "react";
 import { OrderStatus } from "@/types/order";
-import LanguageToggle from "@/components/LanguageToggle";
+import LanguageToggle, {
+  LanguageToggleNavbarItem,
+} from "@/components/LanguageToggle";
 import { useLanguageStore } from "@/store/language";
 
 const navItems = [
@@ -172,9 +174,8 @@ export default function AdminLayout({
           </NavbarSection>
           <NavbarSpacer />
           <NavbarSection>
-            <NavbarItem aria-label="Toggle Language">
-              <LanguageToggle />
-            </NavbarItem>
+            <LanguageToggleNavbarItem />
+
             <NavbarItem aria-label="Toggle theme">
               <DropDownToggleTheme />
             </NavbarItem>
@@ -194,11 +195,6 @@ export default function AdminLayout({
                   <UserIcon />
                   <DropdownLabel>My profile</DropdownLabel>
                 </DropdownItem>
-                {/* <DropdownItem href="/dashboard/account/settings">
-                  <Cog8ToothIcon />
-                  <DropdownLabel>Settings</DropdownLabel>
-                </DropdownItem>
-                <DropdownDivider /> */}
 
                 <DropdownItem href="/dashboard/account/profile#change-password">
                   <KeyIcon />

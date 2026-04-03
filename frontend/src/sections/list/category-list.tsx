@@ -26,7 +26,7 @@ import {
 import paths from "@/router/path";
 import { Category } from "@/types/category";
 import { Badge } from "@/components/badge";
-import language from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { Input } from "@/components/input";
 
 type ColumnVisibilityState = Record<keyof Category, boolean>;
@@ -38,10 +38,9 @@ const defaultVisibilityState: ColumnVisibilityState = {
   isActive: false,
   createdAt: false,
   updatedAt: false,
-  createdBy: false,
   images: false,
   type: false,
-} as ColumnVisibilityState;
+};
 
 const mergeVisibilityState = (
   state?: Partial<ColumnVisibilityState>,
@@ -59,13 +58,14 @@ type Props = {
   onRestore?: (category: Category) => void;
 };
 
-const formattedMessage = language.inventory.categories.form;
-
 export default function CategoryList({
   data,
   isLoading,
   visibilityState,
 }: Props) {
+  const language = useDictionary();
+  const formattedMessage = language.admin.inventory.categories.column;
+  const isEn = language.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<Category>[]>(
@@ -85,13 +85,15 @@ export default function CategoryList({
         header: formattedMessage.isActive,
         cell: (info) => (
           <Badge color={(info.getValue() as boolean) ? "green" : "red"}>
-            {(info.getValue() as boolean) ? "Active" : "Inactive"}
+            {(info.getValue() as boolean)
+              ? language.common.active
+              : language.common.inactive}
           </Badge>
         ),
         size: 100,
       },
     ],
-    [],
+    [formattedMessage],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -127,7 +129,11 @@ export default function CategoryList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by name, description, or status..."
+        placeholder={
+          isEn
+            ? "Search by name, description, or status..."
+            : "Tim theo ten, mo ta hoac trang thai..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />
@@ -177,14 +183,13 @@ export default function CategoryList({
                             />
                           )}
                         </div>
-          
-                          <div
-                            role="presentation"
-                            onMouseDown={header.getResizeHandler()}
-                            onTouchStart={header.getResizeHandler()}
-                            className="w-1 h-6 bg-gray-300 hover:bg-blue-500 cursor-col-resize select-none touch-none"
-                          />
-                     
+
+                        <div
+                          role="presentation"
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className="w-1 h-6 bg-gray-300 hover:bg-blue-500 cursor-col-resize select-none touch-none"
+                        />
                       </div>
                     </TableHeader>
                   );

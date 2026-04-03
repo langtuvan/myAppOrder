@@ -34,6 +34,7 @@ import {
 } from "@/components/dropdown";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { Input } from "@/components/input";
+import { useDictionary } from "@/dictionaries/locale";
 
 type ColumnVisibilityState = Record<keyof User, boolean>;
 
@@ -44,19 +45,15 @@ const defaultVisibilityState: ColumnVisibilityState = {
   role: false,
   createdAt: false,
   updatedAt: false,
-  createdBy: false,
-  profilePictureUrl: false,
   isActive: false,
   address: false,
   age: false,
-  deletedAt: false,
-  deletedBy: false,
   deleted: false,
   gender: false,
   id: false,
   password: false,
   refreshToken: false,
-} as ColumnVisibilityState;
+};
 
 const mergeVisibilityState = (
   state?: Partial<ColumnVisibilityState>,
@@ -72,23 +69,25 @@ type Props = {
 };
 
 export default function UserList({ data, isLoading, visibilityState }: Props) {
+  const language = useDictionary();
+  const isEn = language.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
       {
         accessorKey: "name",
-        header: "Name",
+        header: language.admin.system.users.column.name,
         size: 200,
       },
       {
         accessorKey: "email",
-        header: "Email",
+        header: language.admin.system.users.column.email,
         size: 250,
       },
       {
         accessorKey: "role.name",
-        header: "Role",
+        header: language.admin.system.users.column.role,
         cell: (info) => (info.row.original.role as any)?.name ?? "—",
         size: 150,
       },
@@ -104,14 +103,14 @@ export default function UserList({ data, isLoading, visibilityState }: Props) {
               <DropdownItem
                 href={paths.dashboard.system.users.edit(info.row.original._id!)}
               >
-                Edit
+                {language.common.edit}
               </DropdownItem>
               <DropdownItem
                 href={paths.dashboard.system.users.resetPassword(
                   info.row.original._id!,
                 )}
               >
-                Reset Password
+                {isEn ? "Reset Password" : "Dat lai mat khau"}
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
@@ -119,7 +118,7 @@ export default function UserList({ data, isLoading, visibilityState }: Props) {
         size: 60,
       },
     ],
-    [],
+    [language, isEn],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -150,13 +149,16 @@ export default function UserList({ data, isLoading, visibilityState }: Props) {
     setColumnVisibility(mergeVisibilityState(visibilityState));
   }, [visibilityState]);
 
-
   return (
     <div className="space-y-4">
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by name, email, or role..."
+        placeholder={
+          isEn
+            ? "Search by name, email, or role..."
+            : "Tim theo ten, email hoac vai tro..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

@@ -27,6 +27,7 @@ import {
 import paths from "@/router/path";
 import { type GoodsReceipt as Type } from "@/types/goodReceipt";
 import { Input } from "@/components/input";
+import { useDictionary } from "@/dictionaries/locale";
 
 type ColumnVisibilityState = Record<keyof Type, boolean>;
 
@@ -62,6 +63,8 @@ export default function GoodsReceiptsList({
   isLoading,
   visibilityState,
 }: Props) {
+  const language = useDictionary();
+  const isEn = language.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   // table state
@@ -69,25 +72,33 @@ export default function GoodsReceiptsList({
     () => [
       {
         accessorKey: "code",
-        header: "Name",
+        header: language.admin.inventory.goodsReceipts.column.code,
       },
       {
         accessorKey: "note",
-        header: "Description",
+        header: language.admin.inventory.goodsReceipts.column.note,
         size: 300,
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: language.admin.inventory.goodsReceipts.column.status,
         cell: (info) => (
-          <Badge color={(info.getValue() as boolean) ? "green" : "red"}>
-            {(info.getValue() as boolean) ? "Active" : "Inactive"}
+          <Badge
+            color={
+              (info.getValue() as string)?.toLowerCase() === "completed"
+                ? "green"
+                : (info.getValue() as string)?.toLowerCase() === "cancelled"
+                  ? "red"
+                  : "yellow"
+            }
+          >
+            {String(info.getValue() ?? "")}
           </Badge>
         ),
         size: 50,
       },
     ],
-    [],
+    [language],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -127,7 +138,11 @@ export default function GoodsReceiptsList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by code, description, or status..."
+        placeholder={
+          isEn
+            ? "Search by code, description, or status..."
+            : "Tim theo ma, mo ta hoac trang thai..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

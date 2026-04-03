@@ -12,17 +12,16 @@ export function Header({
   return (
     <div className="flex w-full rounded-lg mb-4  items-center justify-between gap-4  ">
       <Heading>{title}</Heading>
-      {action && <div className="flex gap-4">{action}</div>}
+      <div className="flex items-center gap-4">
+        {action && <div className="flex gap-4">{action}</div>}
+      </div>
     </div>
   );
 }
 
 export function AddBtn({ href }: { href: string }) {
   return (
-    <Button
-      href={href}
-      plain
-    >
+    <Button href={href} plain>
       <PlusIcon />
     </Button>
   );

@@ -11,24 +11,21 @@ import {
 } from "@/hooks/RectHookForm";
 
 import { useEffect, useMemo } from "react";
-import { FieldGroup, Fieldset } from "@/components/fieldset";
-import { useRouter } from "next/navigation";
+import { Fieldset } from "@/components/fieldset";
+
 import { CreateCustomerDto, Customer } from "@/types/customer";
 
-import _, { add, first } from "lodash";
+import _ from "lodash";
 import { LoadingButton } from "@/components/loading";
-import { Button } from "@/components/button";
-import { TrashIcon } from "@heroicons/react/24/outline";
 import {
-  useCustomer,
   useCreateCustomer,
   useUpdateCustomer,
   useLazyCustomerByPhone,
 } from "@/hooks/useCustomers";
-import { useRoles } from "@/hooks/useRoles";
 import { ModalLayout } from "@/components/modal";
 import vietNamLocation from "@/mock/provinces_and_wards_full.json";
 import { BoxLabel } from "@/components/box";
+import { useLanguageStore } from "@/store/language";
 
 interface FormValuesProps extends CreateCustomerDto {}
 
@@ -235,6 +232,28 @@ export function CustomerFindNewEditForm({
   onClose,
   setCustomerData,
 }: FindProps) {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    editCustomer: locale === "vi" ? "Sua khach hang" : "Edit Customer",
+    addCustomer: locale === "vi" ? "Them khach hang" : "Add Customer",
+    mainInfo: locale === "vi" ? "Thong tin chinh" : "Main information",
+    fullName: locale === "vi" ? "Ho va ten" : "Full name",
+    phone: locale === "vi" ? "So dien thoai" : "Phone",
+    email: "Email",
+    gender: locale === "vi" ? "Gioi tinh" : "Gender",
+    male: locale === "vi" ? "Nam" : "Male",
+    female: locale === "vi" ? "Nu" : "Female",
+    other: locale === "vi" ? "Khac" : "Other",
+    company: locale === "vi" ? "Ten cong ty" : "Company",
+    notes: locale === "vi" ? "Ghi chu" : "Notes",
+    active: locale === "vi" ? "Kich hoat" : "Active",
+    addressInfo: locale === "vi" ? "Dia chi" : "Address",
+    province: locale === "vi" ? "Tinh/Thanh pho" : "Province/City",
+    ward: locale === "vi" ? "Phuong/Xa" : "Ward",
+    street: locale === "vi" ? "So nha, duong" : "Street address",
+    select: locale === "vi" ? "Chon" : "Select",
+    save: locale === "vi" ? "Luu" : "Save",
+  };
   // fetch data options
   const { provinces, table } = vietNamLocation;
   // find customer by phone when on blur phone input
@@ -277,7 +296,9 @@ export function CustomerFindNewEditForm({
     province: Yup.string(),
     ward: Yup.string().test(
       "ward-required-if-province",
-      "Ward is required if province is selected",
+      locale === "vi"
+        ? "Phuong/Xa la bat buoc khi da chon tinh"
+        : "Ward is required if province is selected",
       function (value) {
         const { province } = this.parent;
         if (province) {
@@ -291,7 +312,9 @@ export function CustomerFindNewEditForm({
       .max(100)
       .test(
         "address-required-if-province",
-        "Address is required if province is selected",
+        locale === "vi"
+          ? "Dia chi la bat buoc khi da chon tinh"
+          : "Address is required if province is selected",
         function (value) {
           const { province } = this.parent;
           if (province) {
@@ -424,53 +447,49 @@ export function CustomerFindNewEditForm({
   return (
     <ModalLayout
       onClose={onClose}
-      dialogTitle={isEditing ? "Edit Customer" : "Add Customer"}
+      dialogTitle={isEditing ? l.editCustomer : l.addCustomer}
       size="5xl"
     >
       <FormProvider methods={methods}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <BoxLabel label="Thông tin chính" className="space-y-3">
-              <RHFTextField name="firstName" label="Họ và tên" required />
+            <BoxLabel label={l.mainInfo} className="space-y-3">
+              <RHFTextField name="firstName" label={l.fullName} required />
 
               <RHFTextField
                 name="phone"
-                label="Phone"
+                label={l.phone}
                 autoFocus
                 required
                 onBlur={handleFindPhoneBlur}
                 onKeyDown={handlePhoneKeyDown}
               />
-              <RHFTextField name="email" label="Email" />
+              <RHFTextField name="email" label={l.email} />
 
               <RHFSelectField
                 name="gender"
-                label="Giới Tính"
+                label={l.gender}
                 options={[
-                  { label: "Nam", value: "male" },
-                  { label: "Nữ", value: "female" },
-                  { label: "Khác", value: "other" },
+                  { label: l.male, value: "male" },
+                  { label: l.female, value: "female" },
+                  { label: l.other, value: "other" },
                 ]}
               />
-              <RHFTextField name="company" label="Tên công ty" />
-              <RHFTextField name="notes" label="Ghi chú" />
-              <RHFCheckBoxField
-                name="isActive"
-                label="Kích hoạt"
-                color="blue"
-              />
+              <RHFTextField name="company" label={l.company} />
+              <RHFTextField name="notes" label={l.notes} />
+              <RHFCheckBoxField name="isActive" label={l.active} color="blue" />
             </BoxLabel>
 
-            <BoxLabel label="Địa chỉ" className="space-y-3">
+            <BoxLabel label={l.addressInfo} className="space-y-3">
               <RHFSelectField
                 name="province"
-                label="Tỉnh/Thành phố"
+                label={l.province}
                 options={provinceList}
               />
 
               <RHFSelectField
                 name="ward"
-                label="Phường/Xã"
+                label={l.ward}
                 options={
                   selectedProvince?.wards?.map((ward: any) => ({
                     label: ward.name,
@@ -479,7 +498,7 @@ export function CustomerFindNewEditForm({
                 }
               />
 
-              <RHFTextField name="address" label="Số nhà, đường" />
+              <RHFTextField name="address" label={l.street} />
             </BoxLabel>
           </div>
 
@@ -489,7 +508,7 @@ export function CustomerFindNewEditForm({
               color="blue"
               onClick={handleSubmit((data) => onSubmit(data))}
             >
-              {!isDirty ? "Chọn" : "Lưu"}
+              {!isDirty ? l.select : l.save}
             </LoadingButton>
           )}
         </Fieldset>

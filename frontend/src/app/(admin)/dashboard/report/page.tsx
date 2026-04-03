@@ -21,6 +21,7 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Strong, Text } from "@/components/text";
 import { Heading } from "@/components/heading";
+import { useLanguageStore } from "@/store/language";
 
 ChartJS.register(
   CategoryScale,
@@ -34,23 +35,24 @@ ChartJS.register(
   Filler,
 );
 
-const currency = new Intl.NumberFormat("vi-VN", {
-  style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
-});
-
-const numberFmt = new Intl.NumberFormat("en-US");
-
-const quickRanges = [
-  { label: "Today", days: 0 },
-  { label: "Yesterday", days: 1 },
-  { label: "7 days", days: 6 },
-  { label: "14 days", days: 13 },
-  { label: "30 days", days: 29 },
-];
-
 export default function SalesReportPage() {
+  const { locale } = useLanguageStore();
+
+  const currency = useMemo(
+    () =>
+      new Intl.NumberFormat(locale === "en" ? "en-US" : "vi-VN", {
+        style: "currency",
+        currency: locale === "en" ? "USD" : "VND",
+        maximumFractionDigits: 0,
+      }),
+    [locale],
+  );
+
+  const numberFmt = useMemo(
+    () => new Intl.NumberFormat(locale === "en" ? "en-US" : "vi-VN"),
+    [locale],
+  );
+
   const today = new Date();
   const defaultStart = format(today, "yyyy-MM-dd");
   const defaultEnd = format(today, "yyyy-MM-dd");
@@ -62,11 +64,19 @@ export default function SalesReportPage() {
     endDate,
     true,
   );
+
+  const quickRanges = [
+    { label: locale === "en" ? "Today" : "Hôm nay", days: 0 },
+    { label: locale === "en" ? "Yesterday" : "Hôm qua", days: 1 },
+    { label: locale === "en" ? "7 days" : "7 ngày", days: 6 },
+    { label: locale === "en" ? "14 days" : "14 ngày", days: 13 },
+    { label: locale === "en" ? "30 days" : "30 ngày", days: 29 },
+  ];
   const chartData: ChartData<"bar" | "line"> = {
     labels: reportData?.labels || [],
     datasets: [
       {
-        label: "Website revenue",
+        label: { en: "Website revenue", vi: "Doanh thu website" }[locale],
         data: reportData?.datasets.websiteSeries || [],
         backgroundColor: "rgba(14, 165, 233, 0.65)",
         borderRadius: 8,
@@ -74,7 +84,7 @@ export default function SalesReportPage() {
         borderColor: "rgba(14, 165, 233, 0.95)",
       },
       {
-        label: "In-store revenue",
+        label: { en: "In-store revenue", vi: "Doanh thu tại cửa hàng" }[locale],
         data: reportData?.datasets.inStoreSeries || [],
         backgroundColor: "rgba(99, 102, 241, 0.6)",
         borderRadius: 8,
@@ -82,7 +92,7 @@ export default function SalesReportPage() {
         borderColor: "rgba(99, 102, 241, 0.9)",
       },
       {
-        label: "Delivery revenue",
+        label: { en: "Delivery revenue", vi: "Doanh thu giao hàng" }[locale],
         data: reportData?.datasets.deliverySeries || [],
         backgroundColor: "rgba(34, 197, 94, 0.6)",
         borderRadius: 8,
@@ -90,7 +100,7 @@ export default function SalesReportPage() {
         borderColor: "rgba(34, 197, 94, 0.9)",
       },
       {
-        label: "Combined",
+        label: { en: "Combined", vi: "Tổng hợp" }[locale],
         data: reportData?.datasets.totals || [],
         type: "line" as const,
         borderColor: "#0ea5e9",
@@ -164,9 +174,13 @@ export default function SalesReportPage() {
       <div className="rounded-2xl   flex flex-col gap-4">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-bold leading-tight">Orders Report</h1>
+            <h1 className="text-2xl font-bold leading-tight">
+              {locale === "en" ? "Orders Report" : "Báo cáo đơn hàng"}
+            </h1>
             <p className="text-sm">
-              Track revenue and order metrics with daily trends and analysis.
+              {locale === "en"
+                ? "Track revenue and order metrics with daily trends and analysis."
+                : "Theo dõi doanh thu và các chỉ số đơn hàng với xu hướng và phân tích hàng ngày."}
             </p>
           </div>
           <div className="flex gap-3 flex-wrap">
@@ -196,7 +210,9 @@ export default function SalesReportPage() {
         </div>
         <div className="flex flex-wrap gap-4 bg-zinc-100 border-zinc-200 dark:bg-white/10 border mt-6 dark:border-white/10 rounded-xl p-4">
           <div className="flex items-center gap-2 text-sm">
-            <Text className="text-white/80">From</Text>
+            <Text className="text-white/80">
+              {locale === "en" ? "From" : "Từ"}
+            </Text>
             <Input
               type="date"
               value={startDate}
@@ -204,7 +220,9 @@ export default function SalesReportPage() {
             />
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <Text className="text-white/80">To</Text>
+            <Text className="text-white/80">
+              {locale === "en" ? "To" : "Đến"}
+            </Text>
             <Input
               type="date"
               value={endDate}
@@ -216,22 +234,22 @@ export default function SalesReportPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          title="Total Revenue"
+          title={locale === "en" ? "Total Revenue" : "Tổng doanh thu"}
           value={currency.format(summary.combined)}
-          sub={`${daysCount} days • ${bestDayLabel} peak`}
+          sub={`${daysCount} ${locale === "en" ? "days" : "ngày"} • ${bestDayLabel} ${locale === "en" ? "peak" : "đỉnh"}`}
         />
         <SummaryCard
-          title="Website Orders"
+          title={locale === "en" ? "Website Orders" : "Đơn hàng website"}
           value={numberFmt.format(summary.websiteCount)}
           sub={currency.format(summary.websiteTotal)}
         />
         <SummaryCard
-          title="In-Store Orders"
+          title={locale === "en" ? "In-Store Orders" : "Đơn hàng tại cửa hàng"}
           value={numberFmt.format(summary.inStoreCount)}
           sub={currency.format(summary.inStoreTotal)}
         />
         <SummaryCard
-          title="Delivery Orders"
+          title={locale === "en" ? "Delivery Orders" : "Đơn hàng giao hàng"}
           value={numberFmt.format(summary.deliveryCount)}
           sub={currency.format(summary.deliveryTotal)}
         />
@@ -242,10 +260,14 @@ export default function SalesReportPage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <Heading className="text-lg font-semibold ">
-                Daily Order Revenue
+                {locale === "en"
+                  ? "Daily Order Revenue"
+                  : "Doanh thu đơn hàng hàng ngày"}
               </Heading>
               <Text className="text-sm ">
-                Orders and revenue trends with daily breakdown.
+                {locale === "en"
+                  ? "Orders and revenue trends with daily breakdown."
+                  : "Xu hướng đơn hàng và doanh thu với phân tích hàng ngày."}
               </Text>
             </div>
           </div>
@@ -259,35 +281,50 @@ export default function SalesReportPage() {
         </div>
 
         <div className="rounded-2xl  overflow-auto shadow-sm border border-slate-200 p-4 flex flex-col gap-4">
-          <Heading className="text-lg font-semibold ">Range snapshot</Heading>
+          <Heading className="text-lg font-semibold ">
+            {locale === "en" ? "Range snapshot" : "Tóm tắt phạm vi"}
+          </Heading>
           <div className="grid grid-cols-2 gap-3">
             <StatLine
-              label="Website avg/day"
+              label={
+                locale === "en" ? "Website avg/day" : "Trung bình website/ngày"
+              }
               value={currency.format(summary.websiteAverage)}
             />
             <StatLine
-              label="In-store avg/day"
+              label={
+                locale === "en"
+                  ? "In-store avg/day"
+                  : "Trung bình cửa hàng/ngày"
+              }
               value={currency.format(summary.inStoreAverage)}
             />
             <StatLine
-              label="Delivery avg/day"
+              label={
+                locale === "en"
+                  ? "Delivery avg/day"
+                  : "Trung bình giao hàng/ngày"
+              }
               value={currency.format(summary.deliveryAverage)}
             />
             <StatLine
-              label="Website share"
+              label={locale === "en" ? "Website share" : "Chia sẻ website"}
               value={`${ratio(summary.websiteTotal, summary.combined)}%`}
             />
             <StatLine
-              label="In-store share"
+              label={locale === "en" ? "In-store share" : "Chia sẻ cửa hàng"}
               value={`${ratio(summary.inStoreTotal, summary.combined)}%`}
             />
             <StatLine
-              label="Delivery share"
+              label={locale === "en" ? "Delivery share" : "Chia sẻ giao hàng"}
               value={`${ratio(summary.deliveryTotal, summary.combined)}%`}
             />
-            <StatLine label="Peak day" value={bestDayLabel} />
             <StatLine
-              label="Peak revenue"
+              label={locale === "en" ? "Peak day" : "Ngày cao điểm"}
+              value={bestDayLabel}
+            />
+            <StatLine
+              label={locale === "en" ? "Peak revenue" : "Doanh thu cao điểm"}
               value={currency.format(summary.bestDay.total)}
             />
           </div>

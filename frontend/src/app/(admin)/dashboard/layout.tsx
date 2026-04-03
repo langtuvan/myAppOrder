@@ -44,33 +44,57 @@ import { DropDownToggleTheme } from "@/components/ThemeToggle";
 
 import { useMemo } from "react";
 import { OrderStatus } from "@/types/order";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useLanguageStore } from "@/store/language";
 
 const navItems = [
-  { label: "Report", url: "/dashboard", action: "orders:update" },
   {
-    label: "Orders",
+    label: {
+      en: "Dashboard",
+      vi: "Bảng Điều Khiển",
+    },
+    url: "/dashboard",
+    action: "orders:update",
+  },
+  {
+    label: {
+      en: "Orders",
+      vi: "Đơn Hàng",
+    },
     url: "/dashboard/orders",
     action: "orders:read",
     children: [
       {
-        label: "Create Order",
+        label: {
+          en: "Create Order",
+          vi: "Tạo Đơn Hàng",
+        },
         url: "/dashboard/orders/add",
         action: "orders:create",
       },
       {
-        label: "Order List",
+        label: {
+          en: "Order List",
+          vi: "Danh Sách Đơn Hàng",
+        },
         url: "/dashboard/orders",
         action: "orders:update",
       },
     ],
   },
   {
-    label: "Hệ Thống",
+    label: {
+      en: "System",
+      vi: "Hệ Thống",
+    },
     url: "/dashboard/system",
     action: "users:read",
   },
   {
-    label: "Kho Hàng",
+    label: {
+      en: "Inventory",
+      vi: "Kho Hàng",
+    },
     url: "/dashboard/inventory",
     action: "products:read",
   },
@@ -91,6 +115,8 @@ export default function AdminLayout({
 
   const activeLink = pathName.split("/").slice(0, 3).join("/");
 
+  const { locale } = useLanguageStore();
+
   return (
     <StackedLayout
       navbar={
@@ -107,23 +133,23 @@ export default function AdminLayout({
                   return null;
                 }
                 return (
-                  <Dropdown key={label + "dropdown"}>
+                  <Dropdown key={url}>
                     <DropdownButton current={current} as={NavbarItem}>
-                      {label}
+                      {label[locale]}
                       <ChevronDownIcon />
                     </DropdownButton>
                     <DropdownMenu>
                       {children.map(
                         ({ label: childLabel, url: childUrl, action = "" }) => (
                           <DropdownItem
-                            key={childLabel + "dropdownitem"}
+                            key={action + "dropdownitem"}
                             href={childUrl}
                             disabled={pathName === childUrl}
                             className={
                               permissions.includes(action) ? "" : "hidden"
                             }
                           >
-                            {childLabel}
+                            {childLabel[locale]}
                           </DropdownItem>
                         ),
                       )}
@@ -134,18 +160,21 @@ export default function AdminLayout({
 
               return (
                 <NavbarItem
-                  key={label + "navbaritem"}
+                  key={action + "navbaritem"}
                   href={url}
                   current={current}
                   className={permissions.includes(action!) ? "" : "hidden"}
                 >
-                  {label}
+                  {label[locale]}
                 </NavbarItem>
               );
             })}
           </NavbarSection>
           <NavbarSpacer />
           <NavbarSection>
+            <NavbarItem aria-label="Toggle Language">
+              <LanguageToggle />
+            </NavbarItem>
             <NavbarItem aria-label="Toggle theme">
               <DropDownToggleTheme />
             </NavbarItem>
@@ -192,18 +221,18 @@ export default function AdminLayout({
               {navItems.map(({ label, url, children, action }) => {
                 if (children && children.length > 0) {
                   return (
-                    <div key={label + "sidebarsection"}>
+                    <div key={url + "sidebarsection"}>
                       {children.map(
                         ({ label: childLabel, url: childUrl, action = "" }) => (
                           <SidebarItem
                             current={pathName === childUrl}
-                            key={childLabel + "sidebar"}
+                            key={childUrl + "sidebar"}
                             href={childUrl}
                             className={
                               permissions.includes(action) ? "" : "hidden"
                             }
                           >
-                            {childLabel}
+                            {childLabel[locale]}
                           </SidebarItem>
                         ),
                       )}
@@ -215,11 +244,11 @@ export default function AdminLayout({
                 }
                 return (
                   <SidebarItem
-                    key={label + "sidebar"}
+                    key={url + "sidebar"}
                     href={url}
                     current={pathName === url}
                   >
-                    {label}
+                    {label[locale]}
                   </SidebarItem>
                 );
               })}

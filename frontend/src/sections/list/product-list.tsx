@@ -60,6 +60,7 @@ import {
 } from "@/components/dialog";
 import { fetchCategories, fetchProducts } from "@/actions/fetchData";
 import axiosInstance from "@/utils/axios";
+import { useDictionary } from "@/dictionaries/locale";
 
 type ColumnVisibilityState = Record<keyof Product, boolean>;
 
@@ -75,10 +76,9 @@ const defaultVisibilityState: ColumnVisibilityState = {
   stock: false,
   createdAt: false,
   updatedAt: false,
-  createdBy: false,
   imageSrc: false,
   isAvailable: false,
-} as ColumnVisibilityState;
+};
 
 const mergeVisibilityState = (
   state?: Partial<ColumnVisibilityState>,
@@ -98,13 +98,15 @@ export default function ProductList({
   isLoading,
   visibilityState,
 }: Props) {
+  const language = useDictionary();
+  const isEn = language.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<Product>[]>(
     () => [
       {
         accessorKey: "name",
-        header: "Name",
+        header: language.admin.inventory.products.column.name,
         cell: (info) => (
           <div className="flex">
             <div className="mr-4 shrink-0">
@@ -147,16 +149,18 @@ export default function ProductList({
       },
       {
         accessorKey: "isActive",
-        header: "Active",
+        header: language.admin.inventory.products.column.isActive,
         cell: (info) => (
           <Badge color={(info.getValue() as boolean) ? "green" : "red"}>
-            {(info.getValue() as boolean) ? "Active" : "Inactive"}
+            {(info.getValue() as boolean)
+              ? language.common.active
+              : language.common.inactive}
           </Badge>
         ),
         size: 100,
       },
     ],
-    [],
+    [language],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -192,7 +196,11 @@ export default function ProductList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by product name or price..."
+        placeholder={
+          isEn
+            ? "Search by product name or price..."
+            : "Tim theo ten mat hang hoac gia..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

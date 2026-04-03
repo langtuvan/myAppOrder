@@ -25,7 +25,7 @@ import {
 } from "@/components/table-component";
 import paths from "@/router/path";
 import { Role } from "@/types/role";
-import language from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { Input } from "@/components/input";
 import { Badge } from "@/components/badge";
 
@@ -37,14 +37,11 @@ const defaultVisibilityState: ColumnVisibilityState = {
   description: false,
   createdAt: false,
   updatedAt: false,
-  createdBy: false,
-  deletedAt: false,
-  deletedBy: false,
   deleted: false,
   permissions: false,
   id: false,
   isActive: false,
-} as ColumnVisibilityState;
+};
 
 const mergeVisibilityState = (
   state?: Partial<ColumnVisibilityState>,
@@ -62,13 +59,14 @@ interface RolesTableProps {
   onRestore?: (role: Role) => void;
 }
 
-const formattedMessage = language.system.roles.form;
-
 export function RoleList({
   data,
   isLoading,
   visibilityState,
 }: RolesTableProps) {
+  const language = useDictionary();
+  const formattedMessage = language.admin.system.roles.column;
+  const isEn = language.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<Role>[]>(
@@ -93,7 +91,9 @@ export function RoleList({
         header: formattedMessage.isActive,
         cell: (info) => (
           <Badge color={info.getValue() ? "green" : "red"}>
-            {info.getValue() ? "Active" : "Inactive"}
+            {info.getValue()
+              ? language.common.active
+              : language.common.inactive}
           </Badge>
         ),
       },
@@ -110,7 +110,7 @@ export function RoleList({
         header: formattedMessage.updatedAt,
       },
     ],
-    [],
+    [formattedMessage],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -146,7 +146,11 @@ export function RoleList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by name or description..."
+        placeholder={
+          isEn
+            ? "Search by name or description..."
+            : "Tim theo ten hoac mo ta..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

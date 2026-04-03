@@ -26,7 +26,7 @@ import {
 import paths from "@/router/path";
 import { Badge } from "@/components/badge";
 import { Supplier } from "@/types/supplier";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { Input } from "@/components/input";
 
 type ColumnVisibilityState = Record<keyof Supplier, boolean>;
@@ -36,9 +36,6 @@ const defaultVisibilityState: ColumnVisibilityState = {
   name: false,
   description: false,
   isActive: false,
-  createdAt: false,
-  updatedAt: false,
-  createdBy: false,
   contactPerson: false,
   email: false,
   phone: false,
@@ -48,7 +45,7 @@ const defaultVisibilityState: ColumnVisibilityState = {
   companyName: false,
   postalCode: false,
   taxId: false,
-} as ColumnVisibilityState;
+};
 
 const mergeVisibilityState = (
   state?: Partial<ColumnVisibilityState>,
@@ -68,23 +65,25 @@ export default function SupplierList({
   isLoading,
   visibilityState,
 }: Props) {
+  const formattedMessage = useDictionary();
+  const isEn = formattedMessage.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<Supplier>[]>(
     () => [
       {
         accessorKey: "name",
-        header: formattedMessage.inventory.suppliers.form.name,
+        header: formattedMessage.admin.inventory.suppliers.column.name,
         size: 200,
       },
       {
         accessorKey: "description",
-        header: formattedMessage.inventory.suppliers.form.description,
+        header: formattedMessage.admin.inventory.suppliers.column.description,
         size: 300,
       },
       {
         accessorKey: "isActive",
-        header: formattedMessage.inventory.suppliers.form.isActive,
+        header: formattedMessage.admin.inventory.suppliers.column.isActive,
         cell: (info) => (
           <Badge color={(info.getValue() as boolean) ? "green" : "red"}>
             {(info.getValue() as boolean)
@@ -95,7 +94,7 @@ export default function SupplierList({
         size: 100,
       },
     ],
-    [],
+    [formattedMessage],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -131,7 +130,11 @@ export default function SupplierList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by name, description, or status..."
+        placeholder={
+          isEn
+            ? "Search by name, description, or status..."
+            : "Tim theo ten, mo ta hoac trang thai..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

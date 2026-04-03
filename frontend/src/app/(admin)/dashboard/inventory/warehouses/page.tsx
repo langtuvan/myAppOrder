@@ -2,15 +2,16 @@
 import { useWarehouses } from "@/hooks/useWarehouses";
 import paths from "@/router/path";
 import WarehousesList from "@/sections/list/warehouses-list";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { AddBtn, Header } from "@/components/header";
 
 export default function WarehousesPage() {
+  const formattedMessage = useDictionary();
   const { data, isLoading } = useWarehouses();
   return (
     <>
       <Header
-        title={formattedMessage.inventory.warehouses.list}
+        title={formattedMessage.admin.inventory.warehouses.list}
         action={<AddBtn href={paths.dashboard.inventory.warehouses.create} />}
       />
       <WarehousesList

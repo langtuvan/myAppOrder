@@ -6,7 +6,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import {
   FormProvider,
   RHFTextField,
-  RHFCheckBoxField,
   RHFSelectField,
   RHFTextCurrencyField,
 } from "@/hooks/RectHookForm";
@@ -16,29 +15,22 @@ import {
   useDeleteGoodsReceipt,
 } from "@/hooks/useGoodsReceipts";
 import { useEffect, useMemo, useState } from "react";
-import { Field, FieldGroup, Fieldset, Label } from "@/components/fieldset";
+import { Field, Fieldset, Label } from "@/components/fieldset";
 import { useRouter } from "next/navigation";
 
-import _, { set } from "lodash";
+import _ from "lodash";
 import { LoadingButton } from "@/components/loading";
-import { Warehouse, CreateWarehouseDto } from "@/types/warehouse";
 import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
-import {
-  GoodsReceipt,
-  CreateGoodsReceiptDto,
-  GoodsReceiptItemDto,
-  GoodsReceiptStatus,
-} from "@/types/goodReceipt";
-import { on } from "events";
+import { GoodsReceipt, GoodsReceiptItemDto } from "@/types/goodReceipt";
 import { useWarehouses } from "@/hooks/useWarehouses";
 import { useProducts } from "@/hooks/useProducts";
-import { Input } from "@/components/input";
 import { PlusCircle } from "lucide-react";
 import { Combobox, ComboboxLabel, ComboboxOption } from "@/components/combobox";
 import { ModalLayout } from "@/components/modal";
 import { BoxLabel } from "@/components/box";
 import { DialogActions } from "@/components/dialog";
+import { useLanguageStore } from "@/store/language";
 
 //type FormValuesProps = CreateGoodsReceiptDto;
 
@@ -56,6 +48,7 @@ type Props = {
 };
 
 export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
+  const locale = useLanguageStore((state) => state.locale);
   const isEditing = !!currentData;
   const { data: suppliers = [] } = useSuppliers();
   // Mutations
@@ -83,7 +76,9 @@ export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
   );
 
   const schema = Yup.object().shape({
-    supplier: Yup.string().required("Nhà cung cấp là bắt buộc"),
+    supplier: Yup.string().required(
+      locale === "vi" ? "Nha cung cap la bat buoc" : "Supplier is required",
+    ),
     invoiceNumber: Yup.string().optional(),
     invoiceDate: Yup.string().optional(),
     note: Yup.string().optional(),
@@ -95,28 +90,68 @@ export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
         Yup.object().shape({
           product: Yup.object()
             .shape({
-              _id: Yup.string().required("Sản phẩm là bắt buộc"),
+              _id: Yup.string().required(
+                locale === "vi"
+                  ? "San pham la bat buoc"
+                  : "Product is required",
+              ),
               name: Yup.string().required(),
             })
-            .required("Sản phẩm là bắt buộc"),
+            .required(
+              locale === "vi" ? "San pham la bat buoc" : "Product is required",
+            ),
           quantity: Yup.number()
-            .typeError("Số lượng phải là một số")
-            .positive("Số lượng phải lớn hơn 0")
-            .required("Số lượng là bắt buộc"),
+            .typeError(
+              locale === "vi"
+                ? "So luong phai la mot so"
+                : "Quantity must be a number",
+            )
+            .positive(
+              locale === "vi"
+                ? "So luong phai lon hon 0"
+                : "Quantity must be greater than 0",
+            )
+            .required(
+              locale === "vi" ? "So luong la bat buoc" : "Quantity is required",
+            ),
           price: Yup.number()
-            .typeError("Giá phải là một số")
-            .min(0, "Giá phải lớn hơn hoặc bằng 0")
-            .required("Giá là bắt buộc"),
+            .typeError(
+              locale === "vi" ? "Gia phai la mot so" : "Price must be a number",
+            )
+            .min(
+              0,
+              locale === "vi"
+                ? "Gia phai lon hon hoac bang 0"
+                : "Price must be greater than or equal to 0",
+            )
+            .required(
+              locale === "vi" ? "Gia la bat buoc" : "Price is required",
+            ),
           warehouse: Yup.object()
             .shape({
-              _id: Yup.string().required("Kho nhập là bắt buộc"),
+              _id: Yup.string().required(
+                locale === "vi"
+                  ? "Kho nhap la bat buoc"
+                  : "Warehouse is required",
+              ),
               name: Yup.string().required(),
             })
-            .required("Kho nhập là bắt buộc"),
+            .required(
+              locale === "vi"
+                ? "Kho nhap la bat buoc"
+                : "Warehouse is required",
+            ),
         }),
       )
-      .min(1, "Phải có ít nhất một mặt hàng")
-      .required("Mặt hàng là bắt buộc"),
+      .min(
+        1,
+        locale === "vi"
+          ? "Phai co it nhat mot mat hang"
+          : "At least one item is required",
+      )
+      .required(
+        locale === "vi" ? "Mat hang la bat buoc" : "Items are required",
+      ),
   });
 
   const methods = useForm({
@@ -175,9 +210,22 @@ export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
   }, [currentData]);
 
   const formattedLanguage = {
-    title: "Thêm Phiếu Nhập Kho Mới",
-    selectWarehouse: "Chọn Kho Nhập",
-    save: "Lưu Phiếu Nhập Kho",
+    title: locale === "vi" ? "Them phieu nhap kho" : "Add Goods Receipt",
+    invoice: locale === "vi" ? "Phieu nhap" : "Receipt",
+    invoiceNumber: locale === "vi" ? "So hoa don" : "Invoice Number",
+    invoiceDate: locale === "vi" ? "Ngay hoa don" : "Invoice Date",
+    supplier: locale === "vi" ? "Nha cung cap" : "Supplier",
+    chooseSupplier: locale === "vi" ? "Chon nha cung cap" : "Select supplier",
+    note: locale === "vi" ? "Ghi chu" : "Note",
+    itemsInfo: locale === "vi" ? "Thong tin nhap" : "Receipt Items",
+    selectWarehouse: locale === "vi" ? "Chon kho nhap" : "Select Warehouse",
+    selectProduct: locale === "vi" ? "Chon mat hang" : "Select Product",
+    tableProduct: locale === "vi" ? "Mat hang" : "Product",
+    tableQuantity: locale === "vi" ? "So luong" : "Quantity",
+    tablePrice: locale === "vi" ? "Gia" : "Price",
+    tableWarehouse: locale === "vi" ? "Kho nhap" : "Warehouse",
+    save: locale === "vi" ? "Luu" : "Save",
+    cancel: locale === "vi" ? "Huy" : "Cancel",
   };
 
   return (
@@ -190,27 +238,27 @@ export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
           <div className="grid grid-cols-1 gap-6">
             {/* {phiếu nhập} */}
             <BoxLabel
-              label="Phiếu Nhập"
+              label={formattedLanguage.invoice}
               className="bg-white dark:bg-zinc-800 p-4  rounded-md"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <RHFTextField
                   name="invoiceNumber"
-                  label="Số Hóa Đơn"
+                  label={formattedLanguage.invoiceNumber}
                   className="flex flex-row items-baseline gap-2"
                 />
                 <RHFTextField
                   name="invoiceDate"
-                  label="Ngày Hóa Đơn"
+                  label={formattedLanguage.invoiceDate}
                   type="date"
                   className="flex flex-row items-baseline gap-2"
                 />
                 <RHFSelectField
                   name="supplier"
-                  label="Nhà Cung Cấp"
+                  label={formattedLanguage.supplier}
                   className="flex flex-row items-baseline gap-2"
                   options={[
-                    { value: "", label: "Chọn Nhà Cung Cấp" },
+                    { value: "", label: formattedLanguage.chooseSupplier },
                     ...suppliers?.map((supplier) => ({
                       value: supplier._id,
                       label: supplier.name,
@@ -219,7 +267,7 @@ export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
                 />
                 <RHFTextField
                   name="note"
-                  label="Ghi Chú"
+                  label={formattedLanguage.note}
                   type="text"
                   className="flex flex-row items-baseline gap-2"
                 />
@@ -248,7 +296,7 @@ export default function GoodsReceiptsNewEditForm({ currentData }: Props) {
               </LoadingButton>
             )}
             <Button plain onClick={() => router.back()}>
-              Cancel
+              {formattedLanguage.cancel}
             </Button>
           </DialogActions>
         </Fieldset>
@@ -268,6 +316,7 @@ import {
 import { useSuppliers } from "@/hooks/useSuppliers";
 
 function ItemsForm() {
+  const locale = useLanguageStore((state) => state.locale);
   // get select options
   const { data: warehouseOptions = [] } = useWarehouses();
   const { data: productOptions = [] } = useProducts();
@@ -291,14 +340,18 @@ function ItemsForm() {
   };
 
   const formattedLanguage = {
-    title: "Thêm Phiếu Nhập Kho Mới",
-    selectWarehouse: "Chọn Kho Nhập",
-    save: "Lưu Phiếu Nhập Kho",
+    itemsInfo: locale === "vi" ? "Thong tin nhap" : "Receipt Items",
+    selectWarehouse: locale === "vi" ? "Chon kho nhap" : "Select Warehouse",
+    selectProduct: locale === "vi" ? "Chon mat hang" : "Select Product",
+    tableProduct: locale === "vi" ? "Mat hang" : "Product",
+    tableQuantity: locale === "vi" ? "So luong" : "Quantity",
+    tablePrice: locale === "vi" ? "Gia" : "Price",
+    tableWarehouse: locale === "vi" ? "Kho nhap" : "Warehouse",
   };
   return (
     <div>
       <BoxLabel
-        label="Thông Tin Nhập"
+        label={formattedLanguage.itemsInfo}
         className="bg-white dark:bg-zinc-800 p-4  rounded-md"
       >
         <div className="flex flex-row items-baseline gap-2 justify-between">
@@ -329,7 +382,9 @@ function ItemsForm() {
               </Combobox>
             </Field>
             <Field className="flex flex-row items-baseline gap-2 ">
-              <Label className="text-nowrap">Chọn mặt hàng</Label>
+              <Label className="text-nowrap">
+                {formattedLanguage.selectProduct}
+              </Label>
               <Combobox
                 refName="product"
                 value={value.product}
@@ -359,10 +414,10 @@ function ItemsForm() {
       <Table grid striped dense className="mt-6 ">
         <TableHead>
           <TableRow>
-            <TableHeader>Mặt hàng</TableHeader>
-            <TableHeader>Số lượng</TableHeader>
-            <TableHeader>Giá</TableHeader>
-            <TableHeader>Kho Nhập</TableHeader>
+            <TableHeader>{formattedLanguage.tableProduct}</TableHeader>
+            <TableHeader>{formattedLanguage.tableQuantity}</TableHeader>
+            <TableHeader>{formattedLanguage.tablePrice}</TableHeader>
+            <TableHeader>{formattedLanguage.tableWarehouse}</TableHeader>
             <TableHeader></TableHeader>
           </TableRow>
         </TableHead>

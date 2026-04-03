@@ -30,17 +30,16 @@ import { CategoryType } from "@/types/category";
 import axiosInstance, { endpoints } from "@/utils/axios";
 import { validateCategory } from "@/actions/fetchData";
 import { ModalLayout } from "@/components/modal";
-import language from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 
 interface FormValuesProps extends CreateCategoryDto {}
 type Props = {
   currentData?: Category;
 };
 
-const formattedMessage = language.inventory.categories;
-const formattedCommon = language.common;
-
 export default function CategoryNewEditForm({ currentData }: Props) {
+  const formattedMessage = useDictionary();
+
   const isEditing = !!currentData;
   // Initialize mutation hooks
   const createMutation = useCreateCategory();
@@ -155,19 +154,19 @@ export default function CategoryNewEditForm({ currentData }: Props) {
 
   return (
     <ModalLayout
-      dialogTitle={isEditing ? formattedCommon.edit : formattedCommon.add}
+      dialogTitle={isEditing ? formattedMessage.common.edit : formattedMessage.common.add}
     >
       <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 gap-6">
             <RHFTextField
               name="name"
-              label={formattedMessage.form.name}
+              label={formattedMessage.admin.inventory.categories.column.name}
               required
             />
 
             <RHFUpload
-              label={formattedMessage.form.images}
+              label={formattedMessage.admin.inventory.categories.column.images}
               name="images"
               thumbnail
               multiple
@@ -178,7 +177,7 @@ export default function CategoryNewEditForm({ currentData }: Props) {
 
             <RHFSelectField
               name="type"
-              label={formattedMessage.form.type}
+              label={formattedMessage.admin.inventory.categories.column.type}
               disabled
               options={
                 CategoryType
@@ -193,12 +192,12 @@ export default function CategoryNewEditForm({ currentData }: Props) {
 
             <RHFTextField
               name="description"
-              label={formattedMessage.form.description}
+              label={formattedMessage.admin.inventory.categories.column.description}
               required
             />
             <RHFCheckBoxField
               name="isActive"
-              label={formattedMessage.form.isActive}
+              label={formattedMessage.admin.inventory.categories.column.isActive}
               color="blue"
             />
           </div>
@@ -217,7 +216,7 @@ export default function CategoryNewEditForm({ currentData }: Props) {
               color="blue"
               onClick={handleSubmit((data) => onSubmit(data))}
             >
-              {formattedCommon.save}
+              {isEditing ? formattedMessage.common.update : formattedMessage.common.add}
             </LoadingButton>
           )}
         </Fieldset>

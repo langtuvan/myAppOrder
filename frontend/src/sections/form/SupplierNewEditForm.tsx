@@ -20,7 +20,7 @@ import _ from "lodash";
 import { LoadingButton } from "@/components/loading";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { CreateSupplierDto, Supplier } from "@/types/supplier";
 import { ModalLayout } from "@/components/modal";
 
@@ -30,6 +30,7 @@ type Props = {
 };
 
 export default function SupplierNewEditForm({ currentData }: Props) {
+  const formattedMessage = useDictionary();
   const isEditing = !!currentData;
 
   const createMutation = useCreateSupplier();
@@ -116,73 +117,85 @@ export default function SupplierNewEditForm({ currentData }: Props) {
   }, [currentData]);
 
   return (
-    <ModalLayout dialogTitle={isEditing ? "Edit Supplier" : "Add Supplier"}>
+    <ModalLayout
+      dialogTitle={
+        isEditing ? formattedMessage.common.edit : formattedMessage.common.add
+      }
+    >
       <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 gap-6">
             <RHFTextField
               name="name"
-              label={formattedMessage.inventory.suppliers.form.name}
+              label={formattedMessage.admin.inventory.suppliers.column.name}
               required
             />
 
             <RHFTextField
               name="contactPerson"
-              label={formattedMessage.inventory.suppliers.form.contactPerson}
+              label={
+                formattedMessage.admin.inventory.suppliers.column.contactPerson
+              }
               required
             />
 
             <RHFTextField
               name="email"
-              label={formattedMessage.inventory.suppliers.form.email}
+              label={formattedMessage.admin.inventory.suppliers.column.email}
               required
             />
 
             <RHFTextField
               name="phone"
-              label={formattedMessage.inventory.suppliers.form.phone}
+              label={formattedMessage.admin.inventory.suppliers.column.phone}
               required
             />
 
             <RHFTextField
               name="address"
-              label={formattedMessage.inventory.suppliers.form.address}
+              label={formattedMessage.admin.inventory.suppliers.column.address}
               required
             />
 
             <RHFTextField
               name="city"
-              label={formattedMessage.inventory.suppliers.form.city}
+              label={formattedMessage.admin.inventory.suppliers.column.city}
               required
             />
 
             <RHFTextField
               name="country"
-              label={formattedMessage.inventory.suppliers.form.country}
+              label={formattedMessage.admin.inventory.suppliers.column.country}
               required
             />
 
             <RHFTextField
               name="postalCode"
-              label={formattedMessage.inventory.suppliers.form.postalCode}
+              label={
+                formattedMessage.admin.inventory.suppliers.column.postalCode
+              }
               required
             />
 
             <RHFTextField
               name="companyName"
-              label={formattedMessage.inventory.suppliers.form.companyName}
+              label={
+                formattedMessage.admin.inventory.suppliers.column.companyName
+              }
               required
             />
 
             <RHFTextField
               name="description"
-              label={formattedMessage.inventory.warehouses.form.description}
+              label={
+                formattedMessage.admin.inventory.suppliers.column.description
+              }
               required
             />
 
             <RHFCheckBoxField
               name="isActive"
-              label={formattedMessage.inventory.warehouses.form.isActive}
+              label={formattedMessage.admin.inventory.suppliers.column.isActive}
               color="blue"
             />
           </div>

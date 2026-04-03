@@ -11,8 +11,6 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { ModalLayout } from "@/components/modal";
 import { useEffect, useMemo } from "react";
-import { Button } from "@/components/button";
-import { TrashIcon } from "@heroicons/react/24/outline";
 import { Fieldset } from "@/components/fieldset";
 import { useRouter } from "next/navigation";
 import { useUpdateRole } from "@/hooks/useRoles";
@@ -24,6 +22,8 @@ import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { LoadingButton } from "@/components/loading";
 import { useModules } from "@/hooks/useModules";
+import { useDictionary } from "@/dictionaries/locale";
+import { useLanguageStore } from "@/store/language";
 
 interface FormValuesProps extends CreateRoleDto {}
 type Props = {
@@ -40,6 +40,8 @@ const methodColors: Record<string, string> = {
 };
 
 export default function RoleNewEditForm({ currentData }: Props) {
+  const formattedMessage = useDictionary();
+  const locale = useLanguageStore((state) => state.locale);
   const isEditing = !!currentData;
   const router = useRouter();
   // fetch data
@@ -127,9 +129,17 @@ export default function RoleNewEditForm({ currentData }: Props) {
     <>
       <ModalLayout
         size="5xl"
-        dialogTitle={isEditing ? "Edit Role" : "New Role"}
+        dialogTitle={
+          isEditing ? formattedMessage.common.edit : formattedMessage.common.add
+        }
         dialogDescription={
-          isEditing ? "Update the role details" : "Create a new role"
+          locale === "vi"
+            ? isEditing
+              ? "Cập nhật vai trò"
+              : "Tạo vai trò mới"
+            : isEditing
+              ? "Update the role details"
+              : "Create a new role"
         }
       >
         <FormProvider
@@ -138,11 +148,23 @@ export default function RoleNewEditForm({ currentData }: Props) {
         >
           <Fieldset className="space-y-6" disabled={isSubmitting}>
             <div className="grid grid-cols-1 gap-6">
-              <RHFTextField name="name" label={"Name"} required />
+              <RHFTextField
+                name="name"
+                label={formattedMessage.admin.system.roles.column.name}
+                required
+              />
 
-              <RHFTextField name="description" label={"Description"} required />
+              <RHFTextField
+                name="description"
+                label={formattedMessage.admin.system.roles.column.description}
+                required
+              />
 
-              <RHFCheckBoxField name="isActive" label="Active" color="blue" />
+              <RHFCheckBoxField
+                name="isActive"
+                label={formattedMessage.admin.system.roles.column.isActive}
+                color="blue"
+              />
 
               {/* {map module and filter permissions by module} */}
               {moduleData?.map((module) => {
@@ -156,7 +178,10 @@ export default function RoleNewEditForm({ currentData }: Props) {
                     key={module._id}
                     className="space-y-4 ring-1 ring-gray-200 dark:ring-gray-700 p-4 rounded-lg"
                   >
-                    <Heading>{module.name} Permissions</Heading>
+                    <Heading>
+                      {module.name}{" "}
+                      {formattedMessage.admin.system.roles.column.permissions}
+                    </Heading>
                     <Text>{module.description}</Text>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       {permissions.map((permission: any) => {
@@ -264,7 +289,7 @@ export default function RoleNewEditForm({ currentData }: Props) {
               color="blue"
               onClick={handleSubmit((data) => onSubmit(data))}
             >
-              Save
+              {formattedMessage.common.save}
             </LoadingButton>
           </Fieldset>
         </FormProvider>

@@ -22,6 +22,8 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { useCreateUser, useDeleteUser, useUpdateUser } from "@/hooks/useUsers";
 import { useRoles } from "@/hooks/useRoles";
 import { ModalLayout } from "@/components/modal";
+import { useDictionary } from "@/dictionaries/locale";
+import { useLanguageStore } from "@/store/language";
 
 interface FormValuesProps extends CreateUserDto {}
 type Props = {
@@ -29,6 +31,8 @@ type Props = {
 };
 
 export default function UserNewEditForm({ currentData }: Props) {
+  const formattedMessage = useDictionary();
+  const locale = useLanguageStore((state) => state.locale);
   const isEditing = !!currentData;
   const router = useRouter();
   // fetch data options
@@ -105,15 +109,23 @@ export default function UserNewEditForm({ currentData }: Props) {
   }, [currentData]);
 
   return (
-    <ModalLayout dialogTitle={isEditing ? "Edit Supplier" : "Add Supplier"}>
+    <ModalLayout
+      dialogTitle={
+        isEditing ? formattedMessage.common.edit : formattedMessage.common.add
+      }
+    >
       <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 gap-6">
-            <RHFTextField name="name" label="Name" required />
+            <RHFTextField
+              name="name"
+              label={formattedMessage.admin.system.users.column.name}
+              required
+            />
 
             <RHFTextField
               name="email"
-              label="Email"
+              label={formattedMessage.admin.system.users.column.email}
               required
               placeholder="e.g., user@example.com"
             />
@@ -121,42 +133,63 @@ export default function UserNewEditForm({ currentData }: Props) {
             <RHFTextField
               name="password"
               disabled={isEditing}
-              label="Password"
+              label={formattedMessage.admin.system.users.column.password}
               type="password"
               //description="default new user with password is 123456"
               required
             />
 
-            <RHFTextField name="address" label="Address" />
+            <RHFTextField
+              name="address"
+              label={formattedMessage.admin.system.users.column.address}
+            />
 
             <RHFSelectField
               name="gender"
-              label="Gender"
+              label={formattedMessage.admin.system.users.column.gender}
               options={[
-                { label: "Male", value: "male" },
-                { label: "Female", value: "female" },
-                { label: "Other", value: "other" },
+                {
+                  label: locale === "vi" ? "Nam" : "Male",
+                  value: "male",
+                },
+                {
+                  label: locale === "vi" ? "Nu" : "Female",
+                  value: "female",
+                },
+                {
+                  label: locale === "vi" ? "Khac" : "Other",
+                  value: "other",
+                },
               ]}
             />
 
             <RHFSelectField
               name="role"
-              label="Role"
+              label={formattedMessage.admin.system.users.column.role}
               options={
                 roles?.length > 0
-                  ? [{ _id: "", name: "Select a role" }, ...roles].map(
-                      (role: any) => ({
-                        label: role.name,
-                        value: role._id,
-                      }),
-                    )
+                  ? [
+                      {
+                        _id: "",
+                        name:
+                          locale === "vi" ? "Chon vai tro" : "Select a role",
+                      },
+                      ...roles,
+                    ].map((role: any) => ({
+                      label: role.name,
+                      value: role._id,
+                    }))
                   : []
               }
               //placeholder="Select Role"
               required
             />
 
-            <RHFCheckBoxField name="isActive" label="Active" color="blue" />
+            <RHFCheckBoxField
+              name="isActive"
+              label={formattedMessage.admin.system.users.column.isActive}
+              color="blue"
+            />
           </div>
 
           {isEditing && deleteMutation && (
@@ -172,7 +205,9 @@ export default function UserNewEditForm({ currentData }: Props) {
               color="blue"
               onClick={handleSubmit((data) => onSubmit(data))}
             >
-              {isEditing ? "Edit" : "Add"}
+              {isEditing
+                ? formattedMessage.common.update
+                : formattedMessage.common.add}
             </LoadingButton>
           )}
         </Fieldset>

@@ -34,6 +34,7 @@ import { Strong, Text } from "@/components/text";
 import { ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/input";
 import { type Order, deliveryMethods, StatusColor } from "@/types/order";
+import { useLanguageStore } from "@/store/language";
 
 type VisibilityState = Partial<Record<string, boolean>>;
 
@@ -70,6 +71,27 @@ export default function OrderList({
   visibilityState?: VisibilityState;
   isLoading?: boolean;
 }) {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    stt: locale === "vi" ? "STT" : "No.",
+    orderType: locale === "vi" ? "Loai don" : "Order Type",
+    trackingNumber: locale === "vi" ? "Ma van don" : "Tracking number",
+    delivery: locale === "vi" ? "Giao hang" : "Delivery",
+    payment: locale === "vi" ? "Thanh toan" : "Payment",
+    customer: locale === "vi" ? "Khach hang" : "Customer",
+    totalAmount: locale === "vi" ? "Tong tien" : "Total Amount",
+    customerPayCod: locale === "vi" ? "Thu ho COD" : "Customer Pay COD",
+    status: locale === "vi" ? "Trang thai" : "Status",
+    createdAt: locale === "vi" ? "Ngay tao" : "Created At",
+    na: locale === "vi" ? "Khong co" : "N/A",
+    search:
+      locale === "vi"
+        ? "Tim theo loai don, ma van don, khach hang hoac trang thai..."
+        : "Search by order type, tracking number, customer, or status...",
+    type: locale === "vi" ? "Loai" : "Type",
+    quantity: locale === "vi" ? "So luong" : "Quantity",
+    total: locale === "vi" ? "Tong" : "Total",
+  };
   // table state
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
@@ -87,7 +109,7 @@ export default function OrderList({
             className=" sm:flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            STT
+            {l.stt}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -102,7 +124,7 @@ export default function OrderList({
             className="flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Order Type
+            {l.orderType}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -114,7 +136,7 @@ export default function OrderList({
             className="flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Tracking number
+            {l.trackingNumber}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -127,13 +149,13 @@ export default function OrderList({
             className="flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Delivery
+            {l.delivery}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
         cell: (info) => (
           <span className="">
-            {info.row.original.delivery?.deliveryMethod || "N/A"}
+            {info.row.original.delivery?.deliveryMethod || l.na}
           </span>
         ),
         size: 120,
@@ -144,7 +166,7 @@ export default function OrderList({
             className="flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Payment
+            {l.payment}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -171,7 +193,7 @@ export default function OrderList({
             className=" sm:flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Customer
+            {l.customer}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -182,7 +204,7 @@ export default function OrderList({
               : info.row.original.customer?.phone ||
                 info.row.original.customer?.firstName ||
                 info.row.original.customer?.email ||
-                "N/A"}
+                l.na}
           </span>
         ),
         size: 200,
@@ -193,7 +215,7 @@ export default function OrderList({
             className=" sm:flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Total Amount
+            {l.totalAmount}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -212,7 +234,7 @@ export default function OrderList({
             className=" sm:flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Customer Pay COD
+            {l.customerPayCod}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -227,7 +249,7 @@ export default function OrderList({
             className=" sm:flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Status
+            {l.status}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -252,7 +274,7 @@ export default function OrderList({
             className=" sm:flex items-center gap-2 hover:text-primary"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Created At
+            {l.createdAt}
             <ArrowUpDown className="w-4 h-4" />
           </button>
         ),
@@ -264,7 +286,7 @@ export default function OrderList({
         size: 130,
       }),
     ],
-    [],
+    [l],
   );
 
   const table = useReactTable({
@@ -298,7 +320,7 @@ export default function OrderList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by order type, tracking number, customer, or status..."
+        placeholder={l.search}
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
         className="hidden sm:block"
@@ -317,22 +339,23 @@ export default function OrderList({
           >
             <div className="flex flex-col gap-1">
               <Text>
-                Type: <Strong>{row.original.orderType} </Strong>
+                {l.type}: <Strong>{row.original.orderType} </Strong>
               </Text>
               <Text>
-                Tracking number: <Strong>{row.original.trackingNumber} </Strong>
+                {l.trackingNumber}:{" "}
+                <Strong>{row.original.trackingNumber} </Strong>
               </Text>
               <Text>
-                Quantity: <Strong>{row.original.items?.length} </Strong>
+                {l.quantity}: <Strong>{row.original.items?.length} </Strong>
               </Text>
               <Text>
-                Delivery:{" "}
+                {l.delivery}:{" "}
                 <Strong>
-                  {row.original.delivery?.deliveryMethod || "N/A"}{" "}
+                  {row.original.delivery?.deliveryMethod || l.na}{" "}
                 </Strong>
               </Text>
               <Text>
-                Payment:{" "}
+                {l.payment}:{" "}
                 <Strong>
                   {row.original.payment?.paymentMethod} -{" "}
                   <Badge
@@ -347,7 +370,7 @@ export default function OrderList({
                 </Strong>
               </Text>
               <Text>
-                Customer:{" "}
+                {l.customer}:{" "}
                 <Strong>
                   {" "}
                   {typeof row.original.customer === "string"
@@ -355,12 +378,12 @@ export default function OrderList({
                     : row.original.customer?.phone ||
                       row.original.customer?.firstName ||
                       row.original.customer?.email ||
-                      "N/A"}{" "}
+                      l.na}{" "}
                 </Strong>
               </Text>
               <Text className="flex flex-row justify-between">
                 <span>
-                  Total:{" "}
+                  {l.total}:{" "}
                   <Strong>
                     {fCurrencyVND(row.original.billing?.totalAmount || 0)}{" "}
                   </Strong>

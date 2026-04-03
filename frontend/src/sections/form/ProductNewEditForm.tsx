@@ -29,6 +29,7 @@ import { CategoryType } from "@/types/category";
 import axiosInstance, { endpoints } from "@/utils/axios";
 import { validateProduct } from "@/actions/fetchData";
 import { ModalLayout } from "@/components/modal";
+import { useDictionary } from "@/dictionaries/locale";
 
 interface FormValuesProps extends CreateProductDto {}
 type Props = {
@@ -36,6 +37,7 @@ type Props = {
 };
 
 export default function ProductNewEditForm({ currentData }: Props) {
+  const formattedMessage = useDictionary();
   const isEditing = !!currentData;
 
   // fetch data options
@@ -71,10 +73,8 @@ export default function ProductNewEditForm({ currentData }: Props) {
     description: Yup.string().required().min(5),
     images: Yup.array().required(),
     price: Yup.number().required().min(0),
-    stock: Yup.number()
-      .required("Stock is required")
-      .min(0, "Stock must be at least 0"),
-    sku: Yup.string().max(50, "SKU must be less than 50 characters").required(),
+    stock: Yup.number().required().min(0),
+    sku: Yup.string().max(50).required(),
     isActive: Yup.boolean().required(),
   });
 
@@ -165,27 +165,28 @@ export default function ProductNewEditForm({ currentData }: Props) {
   };
 
   const formattedLanguage = {
-    isEditing: isEditing ? "Editing Product" : "Add New Product",
-    title: "Product",
-    name: "Name",
-    description: "Description",
-    category: "Category",
-    price: "Price",
-    stock: "Stock",
-    sku: "SKU",
-    addBtn: "Add",
-    imageSrc: "imageSrc",
+    name: formattedMessage.admin.inventory.products.column.name,
+    category: formattedMessage.admin.inventory.products.column.category,
+    sku: formattedMessage.admin.inventory.products.column.sku,
+    price: formattedMessage.admin.inventory.products.column.price,
+    description: formattedMessage.admin.inventory.products.column.description,
+    stock: formattedMessage.admin.inventory.products.column.stock,
+    images: formattedMessage.admin.inventory.products.column.images,
   };
 
   return (
-    <ModalLayout dialogTitle={isEditing ? "Edit Product" : "Add Product"}>
+    <ModalLayout
+      dialogTitle={
+        isEditing ? formattedMessage.common.edit : formattedMessage.common.add
+      }
+    >
       <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 gap-6">
             <RHFTextField name="name" label={formattedLanguage.name} required />
 
             <RHFUpload
-              label="Pictures"
+              label={formattedLanguage.images}
               name="images"
               thumbnail
               multiple
@@ -198,7 +199,13 @@ export default function ProductNewEditForm({ currentData }: Props) {
               name="category"
               label={formattedLanguage.category}
               options={[
-                { _id: "", name: "Select a category" },
+                {
+                  _id: "",
+                  name:
+                    formattedMessage.welcome === "Welcome"
+                      ? "Select a category"
+                      : "Chọn phân loại",
+                },
                 ...categoriesFiltered,
               ]?.map((category) => ({
                 value: category._id,
@@ -225,7 +232,11 @@ export default function ProductNewEditForm({ currentData }: Props) {
               required
             />
 
-            <RHFCheckBoxField name="isActive" label="Active" color="blue" />
+            <RHFCheckBoxField
+              name="isActive"
+              label={formattedMessage.common.active}
+              color="blue"
+            />
           </div>
 
           {isEditing && deleteMutation && (
@@ -241,7 +252,7 @@ export default function ProductNewEditForm({ currentData }: Props) {
               color="blue"
               onClick={handleSubmit((data) => onSubmit(data))}
             >
-              Save
+              {formattedMessage.common.save}
             </LoadingButton>
           )}
         </Fieldset>

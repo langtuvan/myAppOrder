@@ -26,7 +26,7 @@ import {
 import paths from "@/router/path";
 import { Badge } from "@/components/badge";
 import { Warehouse } from "@/types/warehouse";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { Input } from "@/components/input";
 
 type ColumnVisibilityState = Record<keyof Warehouse, boolean>;
@@ -36,11 +36,8 @@ const defaultVisibilityState: ColumnVisibilityState = {
   name: false,
   description: false,
   isActive: false,
-  createdAt: false,
-  updatedAt: false,
-  createdBy: false,
   location: false,
-} as ColumnVisibilityState;
+};
 
 const mergeVisibilityState = (
   state?: Partial<ColumnVisibilityState>,
@@ -60,23 +57,25 @@ export default function WarehousesList({
   isLoading,
   visibilityState,
 }: Props) {
+  const formattedMessage = useDictionary();
+  const isEn = formattedMessage.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<Warehouse>[]>(
     () => [
       {
         accessorKey: "name",
-        header: formattedMessage.inventory.warehouses.form.name,
+        header: formattedMessage.admin.inventory.warehouses.column.name,
         size: 200,
       },
       {
         accessorKey: "description",
-        header: formattedMessage.inventory.warehouses.form.description,
+        header: formattedMessage.admin.inventory.warehouses.column.description,
         size: 300,
       },
       {
         accessorKey: "isActive",
-        header: formattedMessage.inventory.warehouses.form.isActive,
+        header: formattedMessage.admin.inventory.warehouses.column.isActive,
         cell: (info) => (
           <Badge color={(info.getValue() as boolean) ? "green" : "red"}>
             {(info.getValue() as boolean)
@@ -87,7 +86,7 @@ export default function WarehousesList({
         size: 100,
       },
     ],
-    [],
+    [formattedMessage],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -123,7 +122,11 @@ export default function WarehousesList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by name, description, or status..."
+        placeholder={
+          isEn
+            ? "Search by name, description, or status..."
+            : "Tim theo ten, mo ta hoac trang thai..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

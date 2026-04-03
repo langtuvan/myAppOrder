@@ -1,17 +1,18 @@
 "use client";
 import { AddBtn, Header } from "@/components/header";
 import { useUsers } from "@/hooks/useUsers";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import paths from "@/router/path";
 import UserList from "@/sections/list/user-list";
 
 export default function UserPage() {
+  const formattedMessage = useDictionary();
   const { data, isLoading } = useUsers();
   const users = data?.data || [];
   return (
     <>
       <Header
-        title={formattedMessage.system.users.list}
+        title={formattedMessage.admin.system.users.list}
         action={<AddBtn href={paths.dashboard.system.users.create} />}
       />
       <UserList

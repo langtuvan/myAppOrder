@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/table";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { Inventory } from "@/types/inventory";
 import { Input } from "@/components/input";
 import {
@@ -63,28 +63,30 @@ export default function InventoryList({
   isLoading,
   visibilityState,
 }: Props) {
+  const formattedMessage = useDictionary();
+  const isEn = formattedMessage.welcome === "Welcome";
   const [globalFilter, setGlobalFilter] = useState("");
 
   const columns = useMemo<ColumnDef<Inventory>[]>(
     () => [
       {
         accessorKey: "product.name",
-        header: formattedMessage.inventory.inventory.form.product,
+        header: formattedMessage.admin.inventory.inventory.column.product,
       },
       {
         accessorKey: "warehouse.name",
-        header: formattedMessage.inventory.inventory.form.warehouse,
+        header: formattedMessage.admin.inventory.inventory.column.warehouse,
         size: 10,
         maxSize: 10,
       },
       {
         accessorKey: "quantity",
-        header: formattedMessage.inventory.inventory.form.quantity,
+        header: formattedMessage.admin.inventory.inventory.column.quantity,
         size: 10,
         maxSize: 10,
       },
     ],
-    [],
+    [formattedMessage],
   );
 
   const [columnVisibility, setColumnVisibility] =
@@ -120,7 +122,11 @@ export default function InventoryList({
       {/* Search Bar */}
       <Input
         type="text"
-        placeholder="Search by product, warehouse, or quantity..."
+        placeholder={
+          isEn
+            ? "Search by product, warehouse, or quantity..."
+            : "Tim theo mat hang, kho hoac so luong..."
+        }
         value={globalFilter}
         onChange={(e) => setGlobalFilter(e.target.value)}
       />

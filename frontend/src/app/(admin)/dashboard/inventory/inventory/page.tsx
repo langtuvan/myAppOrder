@@ -2,13 +2,14 @@
 import { useInventories } from "@/hooks/useInventory";
 import InventoryList from "@/sections/list/inventory-list";
 import { Header } from "@/components/header";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 
 export default function InventoryListPage() {
+  const formattedMessage = useDictionary();
   const { isLoading, data } = useInventories();
   return (
     <>
-      <Header title={formattedMessage.inventory.inventory.list} />
+      <Header title={formattedMessage.admin.inventory.inventory.list} />
       <InventoryList
         data={data || []}
         isLoading={isLoading}

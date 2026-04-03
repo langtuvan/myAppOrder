@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 // config
 import { HOST_API } from "@/config-global";
 import { image } from "motion/react-client";
+import { useLanguageStore } from "@/store/language";
 
 export const HOST_API_URL = HOST_API + "/api" + "/booking-coffee";
 
@@ -11,7 +12,7 @@ const axiosInstance = axios.create({
   baseURL: HOST_API_URL,
   headers: {
     "Content-Type": "application/json",
-    "X-Locale": "en", // Set default locale header
+    "X-Locale": "vi",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Credentials": true,
   },
@@ -34,10 +35,10 @@ axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     //NProgress.start();
 
-    // const locale = localStorage.getItem("locale") || "vi";
+    const locale = useLanguageStore.getState().locale;
     // const faculty = JSON.parse(localStorage.getItem("currentFaculty") || "{}");
 
-    //config.headers["x-locale"] = locale;
+    config.headers["X-Locale"] = locale;
     config.headers["Access-Control-Allow-Origin"] = HOST_API || "*";
     config.headers["Access-Control-Allow-Credentials"] = true;
     config.headers["authorization"] =

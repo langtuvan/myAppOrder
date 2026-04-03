@@ -57,6 +57,7 @@ import {
 } from "@/types/order";
 import { useCartStore } from "@/store/cart";
 import axiosInstance from "@/utils/axios";
+import { useLanguageStore } from "@/store/language";
 
 export interface OrderFormValuesProps extends OrderDto {}
 
@@ -73,6 +74,11 @@ export default function OrderNewEditForm({
   currentData = undefined,
   changeStatus = false,
 }: Props) {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    cartInfo: locale === "vi" ? "Thong tin gio hang" : "Cart Information",
+    checkout: locale === "vi" ? "Thanh toan" : "Checkout",
+  };
   const router = useRouter();
   const isEditing = !!currentData;
   // permissions & mutations
@@ -166,7 +172,12 @@ export default function OrderNewEditForm({
         paymentStatus: Yup.mixed<PaymentStatus>().required(),
         paymentCardNumber: Yup.string().when("paymentMethod", {
           is: PaymentMethod.ETRANSFER,
-          then: (schema) => schema.required("Card number is required"),
+          then: (schema) =>
+            schema.required(
+              locale === "vi"
+                ? "So the la bat buoc"
+                : "Card number is required",
+            ),
           otherwise: (schema) => schema.notRequired(),
         }),
         paymentCode: Yup.string(),
@@ -198,7 +209,10 @@ export default function OrderNewEditForm({
             !value?.receiptEmail
           ) {
             return this.createError({
-              message: "Delivery information is required for delivery orders",
+              message:
+                locale === "vi"
+                  ? "Thong tin giao hang la bat buoc voi don giao hang"
+                  : "Delivery information is required for delivery orders",
             });
           }
         }
@@ -292,7 +306,7 @@ export default function OrderNewEditForm({
           <div className="grid grid-cols-1 lg:grid-cols-3 pt-4 gap-x-4 gap-y-10 mx-auto max-w-7xl overflow-hidden ">
             {/* {left Thông Tin Giỏ Hàng} */}
             <BoxLabel
-              label="Thông Tin Giỏ Hàng"
+              label={l.cartInfo}
               className="flex flex-1 flex-col lg:col-span-2 px-0"
             >
               <div>
@@ -333,7 +347,7 @@ export default function OrderNewEditForm({
               isSubmitting={methods.formState.isSubmitting}
               type="submit"
             >
-              Thanh Toán
+              {l.checkout}
             </LoadingButton>
           </div>
         </div>
@@ -359,6 +373,14 @@ export function CustomerInfoForm({
   isEditing?: boolean;
   currentCus?: Customer;
 }) {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    customer: locale === "vi" ? "Khach hang" : "Customer",
+    addCustomer: locale === "vi" ? "Them khach hang" : "Add customer",
+    customerName: locale === "vi" ? "Ten KH" : "Name",
+    phone: locale === "vi" ? "So dien thoai" : "Phone",
+    email: "Email",
+  };
   const setValue = useFormContext<OrderFormValuesProps>().setValue;
   const values = useFormContext<OrderFormValuesProps>().watch();
   // customer
@@ -402,12 +424,13 @@ export function CustomerInfoForm({
 
   if (isEditing) {
     return (
-      <BoxLabel label="Khách hàng" className="pt-6">
+      <BoxLabel label={l.customer} className="pt-6">
         {currentCus && (
           <div className="mb-4">
             <Text className="flex justify-between items-center ">
               <span>
-                Tên KH: <Strong> {currentCus?.firstName || ""}</Strong>
+                {l.customerName}:{" "}
+                <Strong> {currentCus?.firstName || ""}</Strong>
               </span>
 
               <Button
@@ -420,7 +443,7 @@ export function CustomerInfoForm({
               </Button>
             </Text>
             <Text>
-              Phone: <Strong> {currentCus?.phone || ""}</Strong>
+              {l.phone}: <Strong> {currentCus?.phone || ""}</Strong>
             </Text>
             <Text>
               Email: <Strong> {currentCus?.email || ""}</Strong>
@@ -434,7 +457,7 @@ export function CustomerInfoForm({
   }
 
   return (
-    <BoxLabel label="Khách hàng">
+    <BoxLabel label={l.customer}>
       {!customer ? (
         <Button
           disabled={isEditing}
@@ -444,7 +467,7 @@ export function CustomerInfoForm({
           color="teal"
           className="mt-2"
         >
-          <PlusIcon /> Thêm Khách hàng
+          <PlusIcon /> {l.addCustomer}
         </Button>
       ) : (
         customer && (
@@ -452,14 +475,15 @@ export function CustomerInfoForm({
             <div className="mb-4">
               <Text className="flex justify-between items-center">
                 <span>
-                  Tên KH: <Strong> {customer?.firstName || ""}</Strong>
+                  {l.customerName}:{" "}
+                  <Strong> {customer?.firstName || ""}</Strong>
                 </span>
                 <Button plain onClick={onUnsetCustomer} className="text-right">
                   <XMarkIcon />
                 </Button>
               </Text>
               <Text>
-                Phone: <Strong> {customer?.phone || ""}</Strong>
+                {l.phone}: <Strong> {customer?.phone || ""}</Strong>
               </Text>
               <Text>
                 Email: <Strong> {customer?.email || ""}</Strong>
@@ -481,6 +505,12 @@ export function CustomerInfoForm({
 }
 
 export function CartTableForm() {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    product: locale === "vi" ? "Mat hang" : "Product",
+    quantity: locale === "vi" ? "So luong" : "Quantity",
+    amount: locale === "vi" ? "Thanh tien" : "Amount",
+  };
   const { control } = useFormContext<OrderFormValuesProps>();
   const { update, remove } = useFieldArray({
     control,
@@ -492,9 +522,9 @@ export function CartTableForm() {
     <Table grid striped bleed dense>
       <TableHead>
         <TableRow>
-          <TableHeader>Mặt hàng</TableHeader>
-          <TableHeader>Số lượng</TableHeader>
-          <TableHeader>Thành Tiền</TableHeader>
+          <TableHeader>{l.product}</TableHeader>
+          <TableHeader>{l.quantity}</TableHeader>
+          <TableHeader>{l.amount}</TableHeader>
 
           <TableHeader className="max-w-10" />
         </TableRow>
@@ -552,6 +582,18 @@ export function CartTableForm() {
 }
 
 export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    billing: locale === "vi" ? "Thanh toan" : "Billing",
+    subTotal: locale === "vi" ? "Thanh tien" : "Subtotal",
+    shipping: locale === "vi" ? "Phi van chuyen" : "Shipping",
+    discount: locale === "vi" ? "Giam gia" : "Discount",
+    total: locale === "vi" ? "Tong cong" : "Total",
+    customerPay: locale === "vi" ? "Khach thanh toan" : "Customer pay",
+    change: locale === "vi" ? "Tien tra lai" : "Change",
+    paymentMethod: locale === "vi" ? "Hinh thuc thanh toan" : "Payment method",
+    cod: locale === "vi" ? "Thu ho COD" : "Collect COD",
+  };
   const values = useFormContext<OrderFormValuesProps>().watch();
   const setValue = useFormContext<OrderFormValuesProps>().setValue;
   useEffect(() => {
@@ -611,17 +653,17 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
     }
   }, [values.billing.totalAmount, values.billing.customerPay]);
   return (
-    <BoxLabel label="Thanh Toán">
+    <BoxLabel label={l.billing}>
       <dl className="  space-y-4  pt-6 text-sm font-medium  ">
         <div className="flex items-center justify-between">
-          <dt className="">Thành tiền</dt>
+          <dt className="">{l.subTotal}</dt>
           <dd>{fCurrencyVND(values.billing.subTotal)}</dd>
         </div>
 
         {(values.orderType === OrderType.DELIVERY ||
           values.orderType === OrderType.WEBSITE) && (
           <div className="flex items-center justify-between">
-            <dt className="">Phí vận chuyển</dt>
+            <dt className="">{l.shipping}</dt>
             <dd className="space-x-2">
               <span
                 className={clsx(
@@ -637,12 +679,12 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
         )}
 
         <div className="flex items-center justify-between">
-          <dt className="">Giảm giá </dt>
+          <dt className="">{l.discount}</dt>
           <dd>{fCurrencyVND(values.billing.discount)}</dd>
         </div>
 
         <div className="flex items-baseline justify-between border-t border-gray-200 pt-6">
-          <dt className="text-base">Tổng cộng </dt>
+          <dt className="text-base">{l.total}</dt>
           <dd className="text-base">
             {isEditing && (
               <Badge
@@ -662,7 +704,7 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
         {values.orderType === OrderType.IN_STORE && (
           <>
             <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-              <dt className="text-base">Khách thanh toán </dt>
+              <dt className="text-base">{l.customerPay}</dt>
               <dd className="text-base">
                 <RHFTextCurrencyField
                   name="billing.customerPay"
@@ -672,7 +714,7 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
             </div>
 
             <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-              <dt className="text-base">Tiền trả lại </dt>
+              <dt className="text-base">{l.change}</dt>
               <dd className="text-base">
                 {fCurrencyVND(
                   values.billing.totalAmount -
@@ -684,7 +726,7 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
         )}
       </dl>
 
-      <BoxLabel label="Hình thức thanh toán" className="mt-6">
+      <BoxLabel label={l.paymentMethod} className="mt-6">
         <fieldset className="mt-4">
           <legend className="sr-only">Payment type</legend>
           <div className="space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-10">
@@ -731,7 +773,7 @@ export function BillingSummary({ isEditing }: { isEditing?: boolean }) {
             </h2>
 
             <fieldset className="mt-4">
-              <legend className="sr-only">Chi tiết COD</legend>
+              <legend className="sr-only">{l.cod}</legend>
               <div className="space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-10"></div>
             </fieldset>
 
@@ -766,6 +808,22 @@ export function DeliveryForm({
   orderType: OrderType;
   customer?: Customer;
 }) {
+  const locale = useLanguageStore((state) => state.locale);
+  const l = {
+    addDelivery:
+      locale === "vi" ? "Them dia chi giao hang" : "Add delivery address",
+    deliveryInfo:
+      locale === "vi" ? "Thong tin giao hang" : "Delivery information",
+    province: locale === "vi" ? "Tinh/Thanh pho" : "Province/City",
+    ward: locale === "vi" ? "Phuong/Xa" : "Ward",
+    address: locale === "vi" ? "Dia chi" : "Address",
+    receiptName: locale === "vi" ? "Ten nguoi nhan" : "Recipient name",
+    receiptPhone: locale === "vi" ? "SDT nguoi nhan" : "Recipient phone",
+    receiptEmail: locale === "vi" ? "Email nguoi nhan" : "Recipient email",
+    note: locale === "vi" ? "Ghi chu" : "Note",
+    cancelDelivery: locale === "vi" ? "Huy giao hang" : "Cancel delivery",
+    selectWard: locale === "vi" ? "Chon phuong/xa" : "Select ward",
+  };
   const {
     formState: { errors },
   } = useFormContext();
@@ -824,7 +882,7 @@ export function DeliveryForm({
   const wardList = useMemo(() => {
     if (!selectedProvince) return [];
     return [
-      { label: "Chọn phường/xã", value: "" },
+      { label: l.selectWard, value: "" },
       ...selectedProvince.wards.map((ward: any) => ({
         label: ward.name,
         value: ward.code,
@@ -835,16 +893,16 @@ export function DeliveryForm({
   if (values.orderType === OrderType.IN_STORE) {
     return (
       <Button onClick={onSetDelivery} color="teal">
-        <PlusIcon /> Thêm địa chỉ giao hàng
+        <PlusIcon /> {l.addDelivery}
       </Button>
     );
   }
   return (
-    <BoxLabel label="Thông Tin giao hàng" className="space-y-2 ">
+    <BoxLabel label={l.deliveryInfo} className="space-y-2 ">
       <RHFSelectField
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2 "
         name="delivery.province"
-        label="Tỉnh/Thành phố"
+        label={l.province}
         required
         options={provinceList}
       />
@@ -852,7 +910,7 @@ export function DeliveryForm({
       <RHFSelectField
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.ward"
-        label="Phường/Xã"
+        label={l.ward}
         required
         options={wardList}
       />
@@ -860,7 +918,7 @@ export function DeliveryForm({
       <RHFTextField
         className="flex flex-row gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.address"
-        label="Địa chỉ"
+        label={l.address}
         required
         autoComplete="address"
       />
@@ -868,7 +926,7 @@ export function DeliveryForm({
       <RHFTextField
         className="flex flex-row justify-between gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.receiptName"
-        label="Tên người nhận"
+        label={l.receiptName}
         required
         autoComplete="name"
       />
@@ -876,7 +934,7 @@ export function DeliveryForm({
       <RHFTextField
         className="flex flex-row justify-between gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.receiptPhone"
-        label="SĐT người nhận"
+        label={l.receiptPhone}
         required
         autoComplete="tel"
       />
@@ -884,20 +942,20 @@ export function DeliveryForm({
       <RHFTextField
         className="flex flex-row justify-between gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.receiptEmail"
-        label="Email người nhận"
+        label={l.receiptEmail}
         autoComplete="email"
       />
 
       <RHFTextAreaField
         className="flex flex-row justify-between gap-2 items-baseline [&>*:first-child]:w-1/2"
         name="delivery.receiptNote"
-        label="ghi chú"
+        label={l.note}
       />
 
       {orderType === OrderType.DELIVERY && (
         <Button className="text-right" plain onClick={onUnsetDelivery}>
           <XMarkIcon />
-          Hủy giao hàng
+          {l.cancelDelivery}
         </Button>
       )}
     </BoxLabel>
@@ -935,7 +993,7 @@ export function UpdateOrderStatus({ id }: { id: string }) {
     [OrderStatus.EXPORTED]: onExported,
     [OrderStatus.DELIVERED]: onDelivered,
     [OrderStatus.COMPLETED]: onCompleted,
-    ['cancel-exported']: onCancelExported,
+    ["cancel-exported"]: onCancelExported,
   };
 
   const onSubmit = async (data: OrderFormValuesProps, action: any) => {

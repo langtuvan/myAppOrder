@@ -22,7 +22,7 @@ import { LoadingButton } from "@/components/loading";
 import { Warehouse, CreateWarehouseDto } from "@/types/warehouse";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
-import formattedMessage from "@/language/language";
+import { useDictionary } from "@/dictionaries/locale";
 import { ModalLayout } from "@/components/modal";
 
 interface FormValuesProps extends CreateWarehouseDto {}
@@ -31,6 +31,7 @@ type Props = {
 };
 
 export default function WarehouseNewEditForm({ currentData }: Props) {
+  const formattedMessage = useDictionary();
   const isEditing = !!currentData;
 
   const createMutation = useCreateWarehouse();
@@ -101,31 +102,41 @@ export default function WarehouseNewEditForm({ currentData }: Props) {
   }, [currentData]);
 
   return (
-    <ModalLayout dialogTitle={isEditing ? "Edit Warehouse" : "Add Warehouse"}>
+    <ModalLayout
+      dialogTitle={
+        isEditing ? formattedMessage.common.edit : formattedMessage.common.add
+      }
+    >
       <FormProvider methods={methods} onSubmit={methods.handleSubmit(onSubmit)}>
         <Fieldset className="space-y-6" disabled={isSubmitting}>
           <div className="grid grid-cols-1 gap-6">
             <RHFTextField
               name="name"
-              label={formattedMessage.inventory.warehouses.form.name}
+              label={formattedMessage.admin.inventory.warehouses.column.name}
               required
             />
 
             <RHFTextField
               name="location"
-              label={formattedMessage.inventory.warehouses.form.location}
+              label={
+                formattedMessage.admin.inventory.warehouses.column.location
+              }
               required
             />
 
             <RHFTextField
               name="description"
-              label={formattedMessage.inventory.warehouses.form.description}
+              label={
+                formattedMessage.admin.inventory.warehouses.column.description
+              }
               required
             />
 
             <RHFCheckBoxField
               name="isActive"
-              label={formattedMessage.inventory.warehouses.form.isActive}
+              label={
+                formattedMessage.admin.inventory.warehouses.column.isActive
+              }
               color="blue"
             />
           </div>
